@@ -193,6 +193,7 @@
     background: url(../images/login_box2.png) no-repeat;
     position: relative;
     margin: 20px auto;
+    opacity: 0.85
 }
 .zzj_login_login_close {
     width: 20px;

@@ -50,4 +50,6 @@ public interface DmUserAccountMapper {
     Integer addOrderDetail(List<OrderDetailReqDTO> list,Long orderId);
 
     List<TrainStationResDTO> getTrainStation(String trainNum);
+
+    List<UserFaceFeatureResDTO> featureList();
 }

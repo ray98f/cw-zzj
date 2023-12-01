@@ -90,4 +90,6 @@ public interface CommonConstants {
     String OFF_CR_NAME = "休";
     Integer DEFAULT_EXAM_COUNT = 5;
 
+    String DEF_TENANT_ID = "RXTX";
+
 }

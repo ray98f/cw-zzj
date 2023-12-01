@@ -16,7 +16,7 @@
 
     <select id="getUserDetail" resultType="com.zzj.dto.res.UserAccountDetailResDTO">
         select
-        t1.USERID as user_id,
+        t1.ID as user_id,
         t2.USER_NUM as user_name,
         t2.REALNAME as user_view_name,
         t5.GROUP_NAME as team_name，
@@ -145,39 +145,6 @@
         WHERE NEW_SCHEDULING_ID = #{crId}
     </select>
 
-    <!--<select id="getTrainSchedules" resultType="com.zzj.dto.res.TrainScheduleDTO">
-        SELECT
-            t.ID,
-            t.TRAINID as TRAIN_ID,
-            s.STATION_NAME,
-            to_char( to_date(t.ARRIVE ,'sssss'),'hh24:mi:ss') AS arrive,
-            to_char( to_date(t.DEPART ,'sssss'),'hh24:mi:ss') AS depart,
-            1 AS  station_type
-        FROM TRAINSCHEDULES t LEFT JOIN STATIONS s ON t.STATION = s.ID
-        WHERE t.STATION  = t."Start"
-        AND TRAINID IN
-        <foreach collection="trainIds" item="trainId" index="index" open="(" separator="," close=")">
-            #{trainId}
-        </foreach>
-        AND SCHEDULENAME IN (SELECT TableName FROM TABLEINFO t2 WHERE t2.ID = #{tableId})
-        UNION
-        SELECT
-            t.ID,
-            t.TRAINID as TRAIN_ID,
-            s.STATION_NAME,
-            to_char( to_date(t.ARRIVE ,'sssss'),'hh24:mi:ss') AS arrive,
-            to_char( to_date(t.DEPART ,'sssss'),'hh24:mi:ss') AS depart,
-            2 AS  station_type
-        FROM TRAINSCHEDULES t LEFT JOIN STATIONS s ON t.STATION = s.ID
-        WHERE t.STATION  = t.DESTINY
-        AND TRAINID IN
-        <foreach collection="trainIds" item="trainId" index="index" open="(" separator="," close=")">
-            #{trainId}
-        </foreach>
-        AND SCHEDULENAME IN (SELECT TableName FROM TABLEINFO t2 WHERE t2.ID = #{tableId})
-
-    </select>-->
-
     <select id="getTrainSchedules" resultType="com.zzj.dto.res.TrainScheduleDTO">
         select t.ID,t.NEW_TRAIN_NUMBER_ID AS TRAIN_ID,t.CURRENT_STATIONS_ID as STATION_ID, t.STATION_NAME,t.IN_TIME AS arrive,t.OUT_TIME AS depart,t.station_type,t3.TRAIN_NAME
         from(
@@ -220,6 +187,11 @@
 <!--        BACKGROUNDUSER = #{backgrounduser}-->
 <!--        where USER_ID = #{userId} and CRUSERDELID = #{cruserdelid}-->
 <!--    </update>-->
+
+    <select id="featureList" resultType="com.zzj.dto.res.UserFaceFeatureResDTO">
+        SELECT * FROM SYS_USER_FACE
+    </select>
+
 
     <insert id="dutyOn" parameterType="com.zzj.dto.req.AttendQuitReqDTO">
         <!--insert into CW_BACKGROUND_RECORD
@@ -336,22 +308,6 @@
           sysdate)
     </insert>
 
-
-    <!--
-insert into RECORDEXAMLIST (rel_id,rel_exam_id,rel_answer,rel_correct,rel_re_id)
-        select ISEQ_RECORDEXAMLIST_ID.nextval, rel_exam_id,rel_answer,rel_correct,rel_re_id
-        from (
-        <foreach collection="list" index="index" item="item" separator="UNION ALL">
-            select
-            #{item.relExamId} REL_EXAM_ID,
-            #{item.relAnswer} REL_ANSWER,
-            #{item.relCorrect} REL_CORRECT,
-            #{reId} REL_RE_ID
-            from dual
-        </foreach>
-        ) A
-
--->
     <insert id="addOrderDetail">
         insert into DRIVER_REPORT_DETAIL
         (
@@ -375,27 +331,5 @@ insert into RECORDEXAMLIST (rel_id,rel_exam_id,rel_answer,rel_correct,rel_re_id)
             from dual
         </foreach>
         ) A
-
-        <!--insert ALL
-        <foreach collection="list" item="item" separator=" ">
-            into "DRIVER_REPORT_DETAIL"
-            ( DRIVER_REPORT_ID,
-            TRAIN_NUMBER_COUNT,
-            START_STATION,
-            RUN_TIME,
-            END_STATION,
-            QUIT_TIME,
-            CREATE_TIME)
-            values
-            (
-            #{orderId},
-             #{item.trainNum},
-             #{item.startStation},
-             #{item.startTime},
-             #{item.endStation},
-             #{item.endTime},
-             sysdate)
-        </foreach>
-        SELECT * FROM dual-->
     </insert>
 </mapper>

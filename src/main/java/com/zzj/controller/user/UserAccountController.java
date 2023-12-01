@@ -1,6 +1,7 @@
 package com.zzj.controller.user;
 
 import com.zzj.annotation.CurrUser;
+import com.zzj.constant.CommonConstants;
 import com.zzj.dto.DataResponse;
 import com.zzj.dto.req.AttendQuitReqDTO;
 import com.zzj.dto.req.ExamRecordReqDTO;
@@ -104,5 +105,16 @@ public class UserAccountController {
         // TODO 钥匙柜接口：终端信息查询接口（Terminal_Query）
         return null;
     }
+
+
+    @GetMapping("/featureList")
+    @ApiOperation(value = "获取特征列表")
+    public DataResponse<List<UserFaceFeatureResDTO>> featureList(@RequestParam String tenantId) {
+        if(CommonConstants.DEF_TENANT_ID.equals(tenantId)){
+            return DataResponse.of(userAccountService.featureList());
+        }
+        return null;
+    }
+
 
 }

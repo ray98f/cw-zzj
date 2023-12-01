@@ -37,4 +37,6 @@ public interface UserAccountService {
 
     List<TrainStationResDTO> getStationList(String trainNum);
 
+    List<UserFaceFeatureResDTO> featureList();
+
 }

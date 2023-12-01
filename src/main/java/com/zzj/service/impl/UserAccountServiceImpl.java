@@ -247,6 +247,11 @@ public class UserAccountServiceImpl implements UserAccountService {
         return dmUserAccountMapper.getTrainStation(trainNum);
     }
 
+    @Override
+    public List<UserFaceFeatureResDTO> featureList() {
+        return dmUserAccountMapper.featureList();
+    }
+
     private SystemUserResDTO loginByPwd(UserLoginReqDTO userLoginReqDTO){
         SystemUserResDTO user = eipUserAccountMapper.getUserByName(userLoginReqDTO.getUsername());
         if (StringUtils.isEmpty(userLoginReqDTO.getUsername()) || StringUtils.isEmpty(userLoginReqDTO.getPassword())

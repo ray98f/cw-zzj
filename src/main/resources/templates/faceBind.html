@@ -1,0 +1,323 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="renderer" content="ie-stand">
+    <style>
+
+    </style>
+    <script type="text/javascript">
+
+    </script>
+
+
+    <title>人脸识别</title>
+    <link href="./static/css/zzj_css.css" type="text/css" rel="stylesheet">
+    <link href="./static/css/keyboard.css" type="text/css" rel="stylesheet">
+    <link href="./static/css/jquery-ui.min.css" type="text/css" rel="stylesheet">
+    <style type="text/css">
+        .err {
+            position: absolute;
+            left: 200px;
+            top: 100px;
+            font-family: "微软雅黑";
+            font-size: 30px;
+            color: red;
+        }
+
+        .zzj_login_wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .zzj-face-box {
+            width: 1250px;
+            height: 900px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+        }
+
+        .zzj-face-box-img {
+            width: 900px;
+            height: 500px;
+            margin: 54px auto;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        /* 正在检测 */
+        .zzj-face-box-tip1 {
+            display: table;
+            padding: 8px 24px;
+            background: rgb(213, 140, 29);
+            color: #fff;
+            border-radius: 10px;
+            margin: auto;
+            font-size: 24px;
+            font-family: "微软雅黑";
+        }
+
+        /* 检测成功 */
+        .zzj-face-box-tip2 {
+            display: table;
+            padding: 8px 24px;
+            background: rgb(15, 173, 41);
+            color: #fff;
+            border-radius: 10px;
+            margin: auto;
+            font-size: 24px;
+            font-family: "微软雅黑";
+        }
+
+        .zzj-face-box-btn {
+            display: table;
+            width: 376px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: linear-gradient(#3ba1e9, #310fca);
+            color: #fff;
+            margin: auto;
+            font-size: 48px;
+            font-family: "微软雅黑";
+            margin-top: 84px;
+        }
+    </style>
+</head>
+
+<body style="">
+    <div class="zzj_login_wrap">
+        <div class="zzj-face-box">
+            <!-- 人脸 -->
+            <div class="zzj-face-box-img" id="cam">
+                <video src="" id="myVideo" style="width: 100%;"></video>
+            </div>
+            <!-- 提示信息 -->
+            <span class="zzj-face-box-tip1" id="faceTip">
+                正在检测......
+            </span>
+            <!-- 按钮 -->
+            <span class="zzj-face-box-btn" id="faceBtn" style="display: none;" onclick="face_gather();">采 集</span>
+            <span class="zzj-face-box-btn" id="faceBtns" style="display: none;" onclick="face_back();">返 回</span>
+        </div>
+    </div>
+    <script type="text/javascript" src="./static/js/jquery-1.10.2.min.js"></script>
+    <!-- <script  type="text/javascript" src="./static/jsjquery.webcam.js"></script> -->
+    <script type="text/javascript" src="./static/js/global.js"></script>
+    <script language="javascript" type="text/javascript" src="./static/js/md5.js"></script>
+    <script language="javascript" type="text/javascript" src="./static/js/jquery.keyboard.js"></script>
+    <script>
+        // 人脸识别
+        var wsaddr = "ws://localhost:8088/rxtx/websocket/test-4";
+        var wsaddr2 = "ws://localhost:8088/rxtx/websocket/test-4";
+        var websocket;
+        // faceValue为websoket传入的值，0为检测失败，1为检测成功
+        var faceValue = 0;
+        var userNo = getCookie("userInfo") ? JSON.parse(getCookie("userInfo")).userName : ''
+
+        function StartWebSocket(wsUri) {
+            websocket = new WebSocket(wsUri);
+            websocket.onopen = function (evt) {
+                onOpen(evt);
+            };
+            websocket.onclose = function (evt) {
+                onClose(evt);
+            };
+            websocket.onmessage = function (evt) {
+                onMessage(evt);
+            };
+            websocket.onerror = function (evt) {
+                onError(evt);
+            };
+        }
+
+        function onOpen(evt) {
+            if (faceValue == 0) {
+                send('{"event":"1"');
+            } else {
+                if (getCookie("faceShow") * 1 == 1) {
+                    // 主页进入
+                    send('{"event":"3"}');
+                } else {
+                    send('{"event":"2","userNo":' + userNo + '}');
+                }
+
+            }
+            doWineTest();
+        }
+
+        function onClose(evt) {
+            send('{"event":"9"}');
+            websocket.close();
+        }
+
+        function onMessage(evt) {
+            if (typeof evt.data == "string") {
+                displayContent(evt.data);
+            } else {
+                alert("非文本消息");
+            }
+        }
+
+        function onError(evt) {
+            //error log
+            websocket.close();
+        }
+
+        function timerCard() {
+            console.log("timerCard")
+            if (card_flag == 0) {
+                if (faceValue == 0) {
+                    send('{"event":"1"}');
+                } else {
+                    send('{"event":"2","userNo":' + userNo + '}');
+                }
+            }
+        }
+
+        function doWineTest() {
+            interval = setInterval('timerCard()', 2000);
+        }
+
+        function send(msg) {
+            websocket.send(msg);
+        }
+
+
+
+        // 打开摄像头
+        $(document).ready(function () {
+            var video = $('#myVideo')[0];
+            if (navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({
+                        audio: false,
+                        video: true
+                    })
+                    .then(function (stream) {
+                        video.srcObject = stream;
+                        video.play();
+                    })
+                    .catch(function (err) {
+                        console.log("Error:" + err);
+                    });
+            } else if (navigator.getUserMedia) {
+                navigator.getUserMedia({
+                    audio: false,
+                    video: true
+                }, function (stream) {
+                    video.src = window.URL.createObjectURL(stream);
+                    video.play();
+                }, function (err) {
+                    console.log("Error:" + err);
+                });
+            }
+        });
+
+        // 打开人脸识别
+        StartWebSocket(wsaddr);
+
+
+        function displayContent(msg) {
+            console.log(new Date().toLocaleString() + "--收到的消息-->" + msg);
+            // 获取人像
+            if (faceValue == 0) {
+                // websocket返回的值赋值
+                faceValue = msg * 1
+                // 如果返回的是0则失败，1为成功
+                if (faceValue == 0) {
+                    $("#faceTip").html("正在检测");
+                } else {
+                    $("#faceTip").html("已检测到人脸");
+                    $("#faceBtn").css("display", "block");
+                    $("#faceBtns").css("display", "none");
+                }
+            } else {
+                if (getCookie("faceShow") * 1 == 1) {
+                    // 主页进入
+                    // 打开对比
+                    if (msg * 1 != 0) {
+                        // 人脸对比
+                        $.ajax({
+                            url: "/zzj/user/faceCompare",
+                            type: "GET",
+                            dataType: "json",
+                            data: JSON.stringify({
+                                "id": msg
+                            }),
+                            beforeSend: function (request) {
+                                request.setRequestHeader("Content-Type", "application/json");
+                            },
+                            success: function (res) {
+                                console.log(res)
+                                if (res.code == 0) {
+                                    console.log("对比成功");
+                                    $("#faceTip").html("校验成功");
+                                    location.href = "/zzj/index.html";
+                                } else {
+                                    console.log("对比失败");
+                                }
+                            },
+                            error: function () {
+                                console.log("...")
+                            }
+                        });
+                        setCookie("faceShow", "")
+                    }
+                } else {
+                    // 点击采集人脸
+                    if (msg * 1 != 0) {
+                        $.ajax({
+                            url: "/zzj/user/faceRegister",
+                            type: "GET",
+                            dataType: "json",
+                            data: JSON.stringify({
+                                "userNo": userNo,
+                                "faceInfo": msg
+                            }),
+                            beforeSend: function (request) {
+                                request.setRequestHeader("Content-Type", "application/json");
+                            },
+                            success: function (res) {
+                                console.log(res)
+                                if (res.code == 0) {
+                                    console.log("录入成功");
+                                    // 切换按钮
+                                    $("#faceBtns").css("display", "block");
+                                    $("#faceBtn").css("display", "none");
+                                } else {
+                                    console.log("接口失败");
+                                }
+                            },
+                            error: function () {
+                                console.log("...")
+                            }
+                        });
+                    }
+
+                }
+            }
+
+        }
+
+        // 点击采集 打开event 2
+        function face_gather() {
+            // 打开采集
+            StartWebSocket(wsaddr2)
+        }
+
+        // 点击返回
+        function face_back() {
+            location.href = "/zzj/index.html";
+        }
+    </script>
+
+
+</body>
+
+</html>

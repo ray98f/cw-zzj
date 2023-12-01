@@ -1,72 +1,76 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
+
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="renderer" content="ie-stand">
     <style>
-    	input::-ms-clear { display: none; }
+        input::-ms-clear {
+            display: none;
+        }
     </style>
     <script type="text/javascript">
-        top.fingerprintFlag=false;	
-        top.fingerReg=false;
+        top.fingerprintFlag = false;
+        top.fingerReg = false;
         var ctx = '/zzj';
         try {
-            $(function() {
-              doFluidLayout();
-              $("input").each(function(i){//防止回车提交表单
-            	  $(this).bind("keypress",function(e){
-            		  if(e.keyCode==13){
-            			return false;
-            		  }
-            	  })
-              });
+            $(function () {
+                doFluidLayout();
+                $("input").each(function (i) { //防止回车提交表单
+                    $(this).bind("keypress", function (e) {
+                        if (e.keyCode == 13) {
+                            return false;
+                        }
+                    })
+                });
             });
         } catch (e) {}
-      //con,clearFlag是否清空选项
-      function refreshGrid(con, clearFlag) {
-        if (!con)
-          con = "dataTable";
-        try {
-          var mfs = document.getElementsByName("mainframe");
-          if (mfs.length <= 0)
-            mfs = window.parent.document.getElementsByName("mainframe");
-          if (mfs.length > 0) {
-            $.each(mfs, function(i, mf) {
-              if (mf.contentWindow.$) {
-            	var tempGrid = mf.contentWindow.$("#" + con);
-            	if($.isFunction(tempGrid.datagrid)){
-            		tempGrid.datagrid('reload');
-    	            if ("undefined"==typeof clearFlag || clearFlag) {
-    	            	tempGrid.datagrid('clearSelections');
-    	            }
-            	}
-              }
-            });
-          } else {
-            $("#" + con).datagrid('reload');
-            $parent("#" + con).datagrid('reload');
-            if ("undefined"==typeof clearFlag || clearFlag) {
-              $("#" + con).datagrid('clearSelections');
-              $parent("#" + con).datagrid('clearSelections');
+        //con,clearFlag是否清空选项
+        function refreshGrid(con, clearFlag) {
+            if (!con)
+                con = "dataTable";
+            try {
+                var mfs = document.getElementsByName("mainframe");
+                if (mfs.length <= 0)
+                    mfs = window.parent.document.getElementsByName("mainframe");
+                if (mfs.length > 0) {
+                    $.each(mfs, function (i, mf) {
+                        if (mf.contentWindow.$) {
+                            var tempGrid = mf.contentWindow.$("#" + con);
+                            if ($.isFunction(tempGrid.datagrid)) {
+                                tempGrid.datagrid('reload');
+                                if ("undefined" == typeof clearFlag || clearFlag) {
+                                    tempGrid.datagrid('clearSelections');
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    $("#" + con).datagrid('reload');
+                    $parent("#" + con).datagrid('reload');
+                    if ("undefined" == typeof clearFlag || clearFlag) {
+                        $("#" + con).datagrid('clearSelections');
+                        $parent("#" + con).datagrid('clearSelections');
+                    }
+
+                }
+
+            } catch (e) {
+                var tab = $('#tabs').tabs('getSelected');
+                var mfs = $("iframe", tab);
+                $.each(mfs, function (i, mf) {
+                    if (mf.contentWindow.$) {
+                        mf.contentWindow.$("#" + con).datagrid('reload');
+                        if ("undefined" == typeof clearFlag || clearFlag) {
+                            mf.contentWindow.$("#" + con).datagrid('clearSelections');
+                        }
+                    }
+                });
             }
 
-          }
-
-        } catch (e) {
-          var tab = $('#tabs').tabs('getSelected');
-          var mfs = $("iframe", tab);
-          $.each(mfs, function(i, mf) {
-            if (mf.contentWindow.$) {
-              mf.contentWindow.$("#" + con).datagrid('reload');
-              if ("undefined"==typeof clearFlag || clearFlag) {
-              	mf.contentWindow.$("#" + con).datagrid('clearSelections');
-              }
-            }
-          });
         }
-
-      }	
     </script>
     <!-- some css fix -->
     <!--[if gte IE 8]>
@@ -81,7 +85,7 @@
     <![endif]-->
 
     <title>自助机</title>
-    <link href="./static/css/zzj_css.css" type="text/css" rel="stylesheet" >
+    <link href="./static/css/zzj_css.css" type="text/css" rel="stylesheet">
     <link href="./static/css/keyboard.css" type="text/css" rel="stylesheet">
     <link href="./static/css/jquery-ui.min.css" type="text/css" rel="stylesheet">
     <style type="text/css">
@@ -103,7 +107,6 @@
             <div class="space"></div>
             <div class="zzj_login_logo">温州市域轨道交通乘务自助终端</div>
             <div class="zzj_login_login_box2" id="div_finger">
-               
                 <input type="hidden" id="fingerPrint" name="fingertpl" value="">
                 <input type="hidden" id="ic_no" name="ic_no" value="">
                 <input type="hidden" id="flag" name="flag" value="">
@@ -112,262 +115,278 @@
                 <div class="err"></div>
             </div>
             <div class="zzj_login_login_box" id="div_psw" style="display: none;">
-                
-                <input type="text" class="zzj_login_user ui-keyboard-input ui-widget-content ui-corner-all" id="user_name_box_psw" name="user_name_psw" value="" autocomplete="off" disableautocomplete="" aria-haspopup="true" role="textbox">
-                <input type="password" class="zzj_login_password ui-keyboard-input ui-widget-content ui-corner-all" id="user_password_box" value="" aria-haspopup="true" role="textbox">
+                <input type="text" class="zzj_login_user ui-keyboard-input ui-widget-content ui-corner-all"
+                    id="user_name_box_psw" name="user_name_psw" value="" autocomplete="off" disableautocomplete=""
+                    aria-haspopup="true" role="textbox">
+                <input type="password" class="zzj_login_password ui-keyboard-input ui-widget-content ui-corner-all"
+                    id="user_password_box" value="" aria-haspopup="true" role="textbox">
                 <input type="hidden" id="password" name="user_password" value="">
                 <input type="button" class="zzj_login_enter" onclick="login('1');">
-                <a href="javascript:;" onclick="login_change('1');" class="login_a">指纹登录</a>
+                <!-- <a href="javascript:;" onclick="login_change('1');" class="login_a">指纹登录</a> -->
+                <a href="javascript:;" onclick="login_change('1');" class="login_a">人脸登录</a>
                 <div class="err"></div>
             </div>
-            <input type="hidden" id="cardNo" name="cardNo" value=""><!--IC卡 -->
+            <input type="hidden" id="cardNo" name="cardNo" value="">
+            <!--IC卡 -->
         </div>
     </form>
-<script type="text/javascript" src="./static/js/jquery-1.10.2.min.js"></script>
-<script type="text/javascript" src="./static/js/global.js"></script>
-<script language="javascript" type="text/javascript" src="./static/js/md5.js"></script>
-<script language="javascript" type="text/javascript" src="./static/js/jquery.keyboard.js"></script>
-<script>
-    var card_flag = 0;
-    function login(loginType) {
+    <script type="text/javascript" src="./static/js/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="./static/js/global.js"></script>
+    <script language="javascript" type="text/javascript" src="./static/js/md5.js"></script>
+    <script language="javascript" type="text/javascript" src="./static/js/jquery.keyboard.js"></script>
+    <script>
+        var card_flag = 0;
 
-        $.ajax({
-                url:"/zzj/login",
-                type:"POST",
-                data:JSON.stringify({"username":$("#user_name_box_psw").val(),"password":window.btoa($("#user_password_box").val()),"cardNo":$("#ic_no").val(),"loginType":loginType}),
-                dataType:"json",
+        function login(loginType) {
+
+            $.ajax({
+                url: "/zzj/login",
+                type: "POST",
+                data: JSON.stringify({
+                    "username": $("#user_name_box_psw").val(),
+                    "password": window.btoa($("#user_password_box").val()),
+                    "cardNo": $("#ic_no").val(),
+                    "loginType": loginType
+                }),
+                dataType: "json",
                 beforeSend: function (request) {
                     request.setRequestHeader("Content-Type", "application/json");
                 },
-                success:function (res) {
+                success: function (res) {
                     console.log(res)
-                    if(res.code == 0){
-                        console.log("token:"+ res.data);
-                        setCookie("userToken",res.data,7);
+                    if (res.code == 0) {
+                        console.log("token:" + res.data);
+                        setCookie("userToken", res.data, 7);
                         location.href = "/zzj/index.html";
-                    }else{
+                    } else {
                         card_flag = 0;
                     }
                 },
-                error:function () {
-                   console.log("...");
-                   card_flag = 0;
+                error: function () {
+                    console.log("...");
+                    card_flag = 0;
                 }
-        });
-    }
+            });
+        }
 
-    function showKeyBoard() {
-        $("#user_name_box_psw").keyboard({
-                layout: 'num', 
+        function showKeyBoard() {
+            $("#user_name_box_psw").keyboard({
+                layout: 'num',
                 autoAccept: true
             });
 
-        $('#user_password_box').keyboard({
-            display: {
-                'bksp': "\u2190",
-                'accept': '确定',
-                'cancel': '取消'
-            },
-            customLayout: {
-                'normal': ['{cancel}']
-            },
-            usePreview: true,
-            alwaysOpen: false,
-            initialFocus: false,
-            reposition: true,
-            position: {
-                of: null,
-                my: 'center top',
-                at: 'center top',
-                at2: 'center bottom'
-            }
-        });
-    }
-
-    //IC卡登录 TODO 20230731
-    //IC卡登录
-    var wsaddr = "ws://localhost:8088/rxtx/websocket/test-3";
-    var websocket;
-    var ic_interval = 200;
-    var interval;
-
-
-    function StartWebSocket(wsUri) {
-        websocket = new WebSocket(wsUri);
-        websocket.onopen = function(evt) {
-            onOpen(evt);
-        };
-        websocket.onclose = function(evt) {
-            onClose(evt);
-        };
-        websocket.onmessage = function(evt) {
-            onMessage(evt);
-        };
-        websocket.onerror = function(evt) {
-            onError(evt);
-        };
-    }
-
-    function onOpen(evt) {
-        
-        send('{"event":"1","port":"COM5"}');//打开串口COM5
-        doWineTest();
-        
-    }
-
-    function onClose(evt) {
-        send('{"event":"9","port":"COM5"}');//停止 串口COM5
-        websocket.close();
-    }
-
-    function onMessage(evt) {
-        if (typeof evt.data == "string") {
-            displayContent(evt.data);
-        }
-        else {
-            alert("非文本消息");
-        }
-    }
-
-    function onError(evt) {
-        //error log
-        websocket.close();
-    }
-
-    function timerCard(){
-        console.log("timerCard")
-        if(card_flag == 0){
-            send('{"event":"2","port":"COM5"}');
-        }
-    }
-    function doWineTest(){
-        interval = setInterval('timerCard()', 2000); 
-    }
-
-    function send(msg){
-        websocket.send(msg);
-    }
-
-    function getClientIp(){
-        $.ajax({
-                url:"/zzj/ipAdd",
-                type:"GET",
-                dataType:"json",
-                success:function (res) {
-                    console.log(res)
-                    setCookie("clientIP",res.data,7);
+            $('#user_password_box').keyboard({
+                display: {
+                    'bksp': "\u2190",
+                    'accept': '确定',
+                    'cancel': '取消'
                 },
-                error:function () {
-                   console.log("...")
+                customLayout: {
+                    'normal': ['{cancel}']
+                },
+                usePreview: true,
+                alwaysOpen: false,
+                initialFocus: false,
+                reposition: true,
+                position: {
+                    of: null,
+                    my: 'center top',
+                    at: 'center top',
+                    at2: 'center bottom'
                 }
-        });
-    }
-
-    function displayContent(msg) {
-        // msg="F3BE7043";
-        console.log(new Date().toLocaleString()+"--收到的消息-->"+msg);
-        if(msg.indexOf("卡号") > -1) {
-            card_flag = 1;
-            console.log(new Date().toLocaleString()+"--解析-->"+msg);
-            var IC_msg = msg.split(":");
-            var IC_No = IC_msg[1];
-            $("#ic_no").val(IC_No);
-            setTimeout(function () {
-                $("#loginFlag").val("2"); //密码登录=0;指纹登录=1;IC卡=2;
-                login("2");
-            }, ic_interval);
-        }
-    }
-    getClientIp();
-    if(getCookie("clientIP") != ""){
-        wsaddr = wsaddr.replace("localhost",getCookie("clientIP"));
-        setTimeout(function () {
-            StartWebSocket(wsaddr);
-        }, 2000);//设置时间内不能重复点击*/
-
-
-    }
-
-</script>
-<script>
-    var fingerClick = true;
-
-    //指纹登录 TODO 20230731 login("3");
-    function login_finger() {
-        /*if (fingerClick) {
-            fingerClick = false;
-            var zkonline = new ActiveXObject("ZKONLINEX.ZKOnlineXCtrl.1");
-            zkonline.FPEngineVersion = "10";
-            zkonline.FakeFunOn = 1; 
-            if (zkonline.GetVerTemplate()) {
-                var fingertpl = zkonline.VerifyTemplate;
-                $("#fingerPrint").val(fingertpl);
-                $("#examLoginForm").submit(); //TODO fingerLogin
-            }
-            
-            zkonline.FreeSensor();
-            zkonline = null;
-        }
-        setTimeout(function () {
-            fingerClick = true;
-        }, 3000);//设置时间内不能重复点击*/
-    }
-
-    function login_change(flag) {
-        if (flag == '1') {
-            console.log("flag="+flag);
-            $("#div_finger").show();
-            $("#div_psw").hide();
-            $("#loginFlag").val("1"); //密码登录=1;IC卡=2;指纹登录=3;
-        } else {
-            setTimeout("showKeyBoard()", 300);
-            $("#div_finger").hide();
-            $("#div_psw").show();
-            $("#loginFlag").val("0"); //密码登录=1;IC卡=2;指纹登录=3;
+            });
         }
 
-    }
+        //IC卡登录 TODO 20230731
+        //IC卡登录
+        var wsaddr = "ws://localhost:8088/rxtx/websocket/test-3";
+        var websocket;
+        var ic_interval = 200;
+        var interval;
 
-    function CloseWebPage() {
-        //判断是否为ie
-        if (navigator.userAgent.indexOf("MSIE") > 0) {
-            //判断是否为ie6
-            if (navigator.userAgent.indexOf("MSIE 6.0") > 0) {
-                window.opener = null;
-                window.close();
+
+        function StartWebSocket(wsUri) {
+            websocket = new WebSocket(wsUri);
+            websocket.onopen = function (evt) {
+                onOpen(evt);
+            };
+            websocket.onclose = function (evt) {
+                onClose(evt);
+            };
+            websocket.onmessage = function (evt) {
+                onMessage(evt);
+            };
+            websocket.onerror = function (evt) {
+                onError(evt);
+            };
+        }
+
+        function onOpen(evt) {
+
+            send('{"event":"1","port":"COM5"}'); //打开串口COM5
+            doWineTest();
+
+        }
+
+        function onClose(evt) {
+            send('{"event":"9","port":"COM5"}'); //停止 串口COM5
+            websocket.close();
+        }
+
+        function onMessage(evt) {
+            if (typeof evt.data == "string") {
+                displayContent(evt.data);
             } else {
-                window.open('', '_top');
-                window.top.close();
+                alert("非文本消息");
             }
         }
-        //判断是否为firefox
-        else if (navigator.userAgent.indexOf("Firefox") > 0) {
-            window.location.href = 'about:blank';
-            window.close();
-        }
-        //其他非firefox等主流浏览器如chrome,safari
-        else {
-            //此处只关了tab
-            window.opener = null;
-            window.open('', '_parent', '');//关Chrome
-            window.close();//关Chrome
 
-            //后台杀进程
-            /*$.ajax({
-                type: "POST",
-                url: ctx + "/selfHelp/closeBrowser.action",
-                success: function (data) {
-                    if (data.flag) {
-                    } else {
-                        $parent.messager.alert('提示', "关闭浏览器失败！", 'error');
-                    }
+        function onError(evt) {
+            //error log
+            websocket.close();
+        }
+
+        function timerCard() {
+            console.log("timerCard")
+            if (card_flag == 0) {
+                send('{"event":"2","port":"COM5"}');
+            }
+        }
+
+        function doWineTest() {
+            interval = setInterval('timerCard()', 2000);
+        }
+
+        function send(msg) {
+            websocket.send(msg);
+        }
+
+        function getClientIp() {
+            $.ajax({
+                url: "/zzj/ipAdd",
+                type: "GET",
+                dataType: "json",
+                success: function (res) {
+                    console.log(res)
+                    setCookie("clientIP", res.data, 7);
+                },
+                error: function () {
+                    console.log("...")
                 }
-            });*/
+            });
+        }
+
+        function displayContent(msg) {
+            // msg="F3BE7043";
+            console.log(new Date().toLocaleString() + "--收到的消息-->" + msg);
+            if (msg.indexOf("卡号") > -1) {
+                card_flag = 1;
+                console.log(new Date().toLocaleString() + "--解析-->" + msg);
+                var IC_msg = msg.split(":");
+                var IC_No = IC_msg[1];
+                $("#ic_no").val(IC_No);
+                setTimeout(function () {
+                    $("#loginFlag").val("2"); //密码登录=0;指纹登录=1;IC卡=2;
+                    login("2");
+                }, ic_interval);
+            }
+        }
+        getClientIp();
+        if (getCookie("clientIP") != "") {
+            wsaddr = wsaddr.replace("localhost", getCookie("clientIP"));
+            setTimeout(function () {
+                StartWebSocket(wsaddr);
+            }, 2000); //设置时间内不能重复点击*/
+
 
         }
-    }
-</script>
+    </script>
+    <script>
+        var fingerClick = true;
+
+        //人脸登录 TODO 20230731 login("3");
+        function login_finger() {
+            /*if (fingerClick) {
+                fingerClick = false;
+                var zkonline = new ActiveXObject("ZKONLINEX.ZKOnlineXCtrl.1");
+                zkonline.FPEngineVersion = "10";
+                zkonline.FakeFunOn = 1; 
+                if (zkonline.GetVerTemplate()) {
+                    var fingertpl = zkonline.VerifyTemplate;
+                    $("#fingerPrint").val(fingertpl);
+                    $("#examLoginForm").submit(); //TODO fingerLogin
+                }
+                
+                zkonline.FreeSensor();
+                zkonline = null;
+            }
+            setTimeout(function () {
+                fingerClick = true;
+            }, 3000);//设置时间内不能重复点击*/
+
+            // 进入人脸识别界面
+            setCookie("faceShow", "1")
+            location.href = "/zzj/index.html";
+        }
+
+        function login_change(flag) {
+            if (flag == '1') {
+                console.log(2222)
+                // 人脸识别
+                console.log("flag=" + flag);
+                $("#div_finger").show();
+                $("#div_psw").hide();
+                $("#loginFlag").val("1"); //密码登录=1;IC卡=2;指纹登录=3;
+            } else {
+                setTimeout("showKeyBoard()", 300);
+                $("#div_finger").hide();
+                $("#div_psw").show();
+                $("#loginFlag").val("0"); //密码登录=1;IC卡=2;指纹登录=3;
+            }
+
+        }
+
+        function CloseWebPage() {
+            //判断是否为ie
+            if (navigator.userAgent.indexOf("MSIE") > 0) {
+                //判断是否为ie6
+                if (navigator.userAgent.indexOf("MSIE 6.0") > 0) {
+                    window.opener = null;
+                    window.close();
+                } else {
+                    window.open('', '_top');
+                    window.top.close();
+                }
+            }
+            //判断是否为firefox
+            else if (navigator.userAgent.indexOf("Firefox") > 0) {
+                window.location.href = 'about:blank';
+                window.close();
+            }
+            //其他非firefox等主流浏览器如chrome,safari
+            else {
+                //此处只关了tab
+                window.opener = null;
+                window.open('', '_parent', ''); //关Chrome
+                window.close(); //关Chrome
+
+                //后台杀进程
+                /*$.ajax({
+                    type: "POST",
+                    url: ctx + "/selfHelp/closeBrowser.action",
+                    success: function (data) {
+                        if (data.flag) {
+                        } else {
+                            $parent.messager.alert('提示', "关闭浏览器失败！", 'error');
+                        }
+                    }
+                });*/
+
+            }
+        }
+    </script>
 
 
 </body>
+
 </html>

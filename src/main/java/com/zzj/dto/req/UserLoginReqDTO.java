@@ -10,7 +10,7 @@ public class UserLoginReqDTO {
 
     private String username;
     private String password;
-    private String fingerTpl;
+    private String faceTpl;
     private String cardNo;
     private String loginType;
 }

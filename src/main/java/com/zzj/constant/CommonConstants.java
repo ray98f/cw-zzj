@@ -86,10 +86,19 @@ public interface CommonConstants {
     String TRAIN_SPLIT = ",";
     String LOGIN_TYPE_NORMAL = "1";
     String LOGIN_TYPE_CARD = "2";
-    String LOGIN_TYPE_FINGER = "3";
+    String LOGIN_TYPE_FACE = "3";
     String OFF_CR_NAME = "休";
     Integer DEFAULT_EXAM_COUNT = 5;
 
     String DEF_TENANT_ID = "RXTX";
-
+    String DUTY_OFF_CR_NAME_CHECK = "晚";
+    String KEY_BOX_RESULT_CODE = "resultCode";
+    String KEY_BOX_RESULT_DATA = "data";
+    String KEY_BOX_RECORD_DATA = "RecData";
+    String KEY_BOX_TOKEN = "accessToken";
+    String KEY_BOX_RES_CODE = "1";
+    String DATE_START = " 00:00:00";
+    String DATE_END = " 59:59:00";
+    Integer DEFAULT_PAGE_SIZE = 10;
+    Integer DEFAULT_PAGE_INDEX = 1;
 }

@@ -26,9 +26,9 @@ spring:
   datasource:
     zzj1:
       driver-class-name: oracle.jdbc.OracleDriver
-      jdbc-url: jdbc:oracle:thin:@10.11.76.40:1521/gisdb
-      username: nocm
-      password: nocm#202310
+      jdbc-url: jdbc:oracle:thin:@192.168.34.120:1521:ORCL
+      username: DBO
+      password: zxwz123
       hikari:
         read-only: false
         connection-timeout: 60000
@@ -40,16 +40,16 @@ spring:
         minimum-idle: 10
     zzj2:
       driver-class-name: oracle.jdbc.OracleDriver
-      jdbc-url: jdbc:oracle:thin:@10.11.76.40:1521/gisdb
-      username: nocm
-      password: nocm#202310
-      #      jdbc-url: jdbc:oracle:thin:@10.11.82.27:1521:XE
-      #      username: DBO
-      #      password: LchBnF5JmcQ3
-      #      driver-class-name: dm.jdbc.driver.DmDriver
-      #      jdbc-url: jdbc:dm://192.168.30.152:5236/DBO?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=utf-8
-      #      username: DBO
-      #      password: wht43s2MsokDmYfD
+      jdbc-url: jdbc:oracle:thin:@192.168.34.120:1521:ORCL
+      username: DBO
+      password: zxwz123
+#      jdbc-url: jdbc:oracle:thin:@10.11.82.27:1521:XE
+#      username: DBO
+#      password: LchBnF5JmcQ3
+#      driver-class-name: dm.jdbc.driver.DmDriver
+#      jdbc-url: jdbc:dm://192.168.30.152:5236/DBO?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=utf-8
+#      username: DBO
+#      password: wht43s2MsokDmYfD
       hikari:
         read-only: false
         connection-timeout: 60000
@@ -61,9 +61,9 @@ spring:
         minimum-idle: 10
     zzj3:
       driver-class-name: oracle.jdbc.OracleDriver
-      jdbc-url: jdbc:oracle:thin:@10.11.76.40:1521/gisdb
-      username: nocm
-      password: nocm#202310
+      jdbc-url: jdbc:oracle:thin:@192.168.34.120:1521:ORCL
+      username: DBO
+      password: zxwz123
       hikari:
         read-only: false
         connection-timeout: 60000
@@ -93,7 +93,7 @@ mybatis-plus:
   type-aliases-package: com.zzj.sms.entity
   configuration:
     multiple-result-sets-enabled: true
-    #    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+#    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
@@ -107,9 +107,9 @@ sign:
 
 async:
   push:
-    pool-size:
-      core: 100
-      max: 100
+   pool-size:
+     core: 100
+     max: 100
 logging:
   file:
     path: ./log

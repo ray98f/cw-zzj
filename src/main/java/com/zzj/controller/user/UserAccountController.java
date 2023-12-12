@@ -1,5 +1,7 @@
 package com.zzj.controller.user;
 
+import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zzj.annotation.CurrUser;
 import com.zzj.constant.CommonConstants;
 import com.zzj.dto.DataResponse;
@@ -11,6 +13,7 @@ import com.zzj.service.UserAccountService;
 import com.zzj.shiro.CurrentLoginUser;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,8 +77,17 @@ public class UserAccountController {
         return DataResponse.of(userAccountService.dutyOn(currentLoginUser,attendQuitReqDTO));
     }
 
+    @PostMapping ("/checkKeyStore")
+    @ApiOperation(value = "校验钥匙归还")
+    @SneakyThrows
+    public DataResponse<CheckKeyStoreResDTO> checkKeyStore(@CurrUser CurrentLoginUser currentLoginUser,
+                                              @RequestBody HashMap<String,Object> map) {
+
+        return DataResponse.of(userAccountService.checkKeyStore(currentLoginUser,map));
+    }
+
     @PostMapping("/dutyOff")
-    @ApiOperation(value = "出勤")
+    @ApiOperation(value = "退勤")
     public DataResponse<String> quitSave(@CurrUser CurrentLoginUser currentLoginUser,@RequestBody AttendQuitReqDTO attendQuitReqDTO){
         return DataResponse.of(userAccountService.dutyOff(currentLoginUser,attendQuitReqDTO));
     }
@@ -106,7 +119,6 @@ public class UserAccountController {
         return null;
     }
 
-
     @GetMapping("/featureList")
     @ApiOperation(value = "获取特征列表")
     public DataResponse<List<UserFaceFeatureResDTO>> featureList(@RequestParam String tenantId) {
@@ -114,6 +126,14 @@ public class UserAccountController {
             return DataResponse.of(userAccountService.featureList());
         }
         return null;
+    }
+
+    @PostMapping ("/faceRegister")
+    @ApiOperation(value = "获取特征列表")
+    @SneakyThrows
+    public DataResponse<Integer> faceRegister(@CurrUser CurrentLoginUser currentLoginUser,
+                                              @RequestBody List<HashMap<String,Object>> list) {
+        return DataResponse.of(userAccountService.faceRegister(currentLoginUser,list));
     }
 
 

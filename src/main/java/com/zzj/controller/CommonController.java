@@ -1,5 +1,6 @@
 package com.zzj.controller;
 
+import com.zzj.constant.CommonConstants;
 import com.zzj.dto.DataResponse;
 import com.zzj.dto.req.UserLoginReqDTO;
 import com.zzj.service.UserAccountService;
@@ -7,6 +8,7 @@ import com.zzj.utils.IpUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -45,14 +47,21 @@ public class CommonController {
         return DataResponse.of(Token);
     }
 
+    //faceCompare 逻辑有点问题
+    @GetMapping("/user/faceCompare")
+    @ApiOperation(value = "人脸比对")
+    public DataResponse<String> featureList(@RequestParam String id) {
+        UserLoginReqDTO userLoginReqDTO = new UserLoginReqDTO();
+        userLoginReqDTO.setLoginType(CommonConstants.LOGIN_TYPE_FACE);
+        userLoginReqDTO.setUsername(id);
+        String Token = userAccountService.getUser(userLoginReqDTO);
+        return DataResponse.of(Token);
+    }
+
     @ApiOperation(value = "获取客户端IP地址")
     @GetMapping(value = "/ipAdd")
     public DataResponse<String> getIP(HttpServletRequest httpServletRequest) {
         String ipAddress = IpUtils.getIpAddr(httpServletRequest);
         return DataResponse.of(ipAddress);
     }
-
-
-
-
 }

@@ -122,7 +122,6 @@
                     id="user_password_box" value="" aria-haspopup="true" role="textbox">
                 <input type="hidden" id="password" name="user_password" value="">
                 <input type="button" class="zzj_login_enter" onclick="login('1');">
-                <!-- <a href="javascript:;" onclick="login_change('1');" class="login_a">指纹登录</a> -->
                 <a href="javascript:;" onclick="login_change('1');" class="login_a">人脸登录</a>
                 <div class="err"></div>
             </div>
@@ -291,15 +290,14 @@
                 }, ic_interval);
             }
         }
-        getClientIp();
+        /*getClientIp();
         if (getCookie("clientIP") != "") {
             wsaddr = wsaddr.replace("localhost", getCookie("clientIP"));
             setTimeout(function () {
                 StartWebSocket(wsaddr);
-            }, 2000); //设置时间内不能重复点击*/
-
-
-        }
+            }, 2000);
+        }*/
+        StartWebSocket(wsaddr);
     </script>
     <script>
         var fingerClick = true;
@@ -326,7 +324,7 @@
 
             // 进入人脸识别界面
             setCookie("faceShow", "1")
-            location.href = "/zzj/index.html";
+            location.href = "/zzj/faceBind.html";
         }
 
         function login_change(flag) {

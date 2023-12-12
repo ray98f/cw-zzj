@@ -92,10 +92,10 @@ mybatis-plus:
   mapper-locations: classpath:/mapper/*.xml
   type-aliases-package: com.zzj.sms.entity
   configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     multiple-result-sets-enabled: true
 #    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
     map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     sql-parser-cache: true
     db-config:
@@ -115,5 +115,11 @@ logging:
     path: ./log
 
 excluded:
-  pages: /zzj/index,/zzj/login,/zzj/logout,/zzj/index.html,/zzj/favicon.ico,/zzj/login.html,/zzj/duty.html,/zzj/duty_result.html,/zzj/three.html,/zzj/off_duty.html,/zzj/off_result.html,/zzj/off_order.html,/zzj/order_result.html,/zzj/ipAdd,/zzj/user/featureList
+  pages: /zzj/index,/zzj/login,/zzj/logout,/zzj/index.html,/zzj/favicon.ico,/zzj/login.html,/zzj/duty.html,/zzj/duty_result.html,/zzj/three.html,/zzj/off_duty.html,/zzj/off_result.html,/zzj/off_order.html,/zzj/order_result.html,/zzj/faceBind.html,/zzj/ipAdd,/zzj/user/faceCompare,/zzj/user/featureList,/zzj/userCardSync
 
+keyBox:
+  auth-url: http://www.keybox21.com:9032/api/login/logintoken
+  record-url: http://www.keybox21.com:9032/api/keyrecords/records_query
+  user-name: admin
+  user-pwd: 123456
+  user-dept: 10000000000000000

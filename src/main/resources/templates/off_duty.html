@@ -108,6 +108,7 @@
         checkToken();
         var userToken = getCookie("userToken");
         var userInfo;
+        var keyStoreFlag=1;
         userInfo = JSON.parse(getCookie("userInfo"));
         dutyInfo = JSON.parse(getCookie("dutyInfo"));
         console.log("dutyInfo:" + dutyInfo);
@@ -168,7 +169,40 @@
             $("#onDutyDataForm").prepend(table_tpl);
         }
 
+        /*
+function checkUserKey(){
+            if(dutyInfo.crName.indexOf("晚") > -1){
+                //判断钥匙是否存
+                $.ajax({
+                    url:"/zzj/user/checkKeyStore",
+                    type:"Get",
+                    data:JSON.stringify({"userId":userInfo.userId,"newSchedulingId":dutyInfo.id}),
+                    dataType:"json",
+                    beforeSend: function (request) {
+                        request.setRequestHeader("Content-Type", "application/json");
+                        request.setRequestHeader("Authorization", userToken);
+                    },
+                    success:function (res) {
+                        console.log(res)
 
+                        if(res.code == 0){
+                            if(res.data.checkRes == 0){
+                                keyStoreFlag = 0;
+                            }else {
+                                //$("#mykey").value =
+                            }
+                        }else{
+                            $parent.messager.alert('提示', res.message, 'info');
+                        }
+
+                    },
+                    error:function () {
+
+                    }
+                });
+            }
+        }
+        */
 
     </script>
 </head>

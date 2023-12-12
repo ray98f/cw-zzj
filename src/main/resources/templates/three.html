@@ -282,7 +282,9 @@
                 "width": "200px"
             });
         }
-
+        function gotoIndex(){
+            location.href = "/zzj/index.html";
+        }
 
 
         window.history.forward(1);
@@ -358,7 +360,7 @@
                     <p>该员工无需三交三问！</p>
                 </div>
                 <div class="btn_box">
-                    <input type="button" class="btn" style="width: 223px;" value="返回首页">
+                    <input type="button" class="btn" style="width: 223px;" onclick="gotoIndex()" value="返回首页">
                 </div>
             </div>
             <div id="have_exam" class="subpage_main_in">
@@ -377,7 +379,7 @@
 
                 <div class="btn_box">
                     <input type="button" class="btn" onclick="save()" value="提交" style="width: 223px;"/>
-                    <input type="button" class="btn" id="btn_last" style="width: 223px;" onclick="" value="返回首页"/>
+                    <input type="button" class="btn" id="btn_last" style="width: 223px;" onclick="gotoIndex()" onclick="" value="返回首页"/>
                 </div>
                 <div><input type="text" id="temporaryID" name="temporaryID" value="" class="input_hidden"></div>
                 <div><input type="text" id="status" name="status" value="" class="input_hidden"></div>

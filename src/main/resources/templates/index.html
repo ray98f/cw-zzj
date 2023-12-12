@@ -126,13 +126,14 @@
                     console.log(res)
                     if (res.code == 0) {
                         userInfo = res.data;
+                        setCookie("userInfo", JSON.stringify(userInfo));
+
                         // 判断当前用户是否采集了人脸
                         if (userInfo.faceFlag == 0) {
                             // 未采集跳转到人脸采集页面
                             location.href = "/zzj/faceBind.html";
                         } else {
                             // 已采集刷新当前页面
-                            setCookie("userInfo", JSON.stringify(userInfo));
                             showMain(userInfo);
                         }
                     } else {

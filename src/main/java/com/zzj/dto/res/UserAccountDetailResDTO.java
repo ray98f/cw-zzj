@@ -58,4 +58,6 @@ public class UserAccountDetailResDTO {
     @ApiModelProperty(value = "岗位列表")
     private List<UserPositionResDTO> positionList;
 
+    private String faceFlag;
+
 }

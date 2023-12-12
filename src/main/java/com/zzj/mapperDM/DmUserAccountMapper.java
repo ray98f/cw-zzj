@@ -3,6 +3,7 @@ package com.zzj.mapperDM;
 import com.baomidou.mybatisplus.annotation.SqlParser;
 import com.zzj.dto.req.*;
 import com.zzj.dto.res.*;
+import io.swagger.models.auth.In;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
 
@@ -16,6 +17,8 @@ public interface DmUserAccountMapper {
     IamUserResDTO getUserByName(String userName);
 
     SysUserCardResDTO getUserByCard(String uuid);
+
+    String getUserByFace(String face);
 
     SystemUserResDTO getUserByFinger(String userName);
 
@@ -52,4 +55,18 @@ public interface DmUserAccountMapper {
     List<TrainStationResDTO> getTrainStation(String trainNum);
 
     List<UserFaceFeatureResDTO> featureList();
+
+    Integer addUserFace(String userNo,List<String> faceList);
+
+    Integer updateFace(String userNo);
+
+    Integer cleanUserCardTable();
+
+    CheckDutyResDTO checkDutyInfo(Long userId,Long id);
+
+    List<UserKeyStoreRecordResDTO> getKeyRecord(CheckDutyResDTO duty);
+
+    KeyCabinetResDTO getKeyCabinetInfo(String boxNum,String keyNum);
+
+    Integer insertKeyRecord(UserKeyStoreRecordResDTO userKeyStoreRecord);
 }

@@ -7,6 +7,7 @@ import com.zzj.dto.req.UserLoginReqDTO;
 import com.zzj.dto.res.*;
 import com.zzj.shiro.CurrentLoginUser;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,5 +39,11 @@ public interface UserAccountService {
     List<TrainStationResDTO> getStationList(String trainNum);
 
     List<UserFaceFeatureResDTO> featureList();
+
+    Integer faceRegister(CurrentLoginUser currentLoginUser,List<HashMap<String,Object>> list);
+
+    CheckKeyStoreResDTO checkKeyStore(CurrentLoginUser currentLoginUser,HashMap<String,Object> map);
+
+    // void getKeyRecord();
 
 }

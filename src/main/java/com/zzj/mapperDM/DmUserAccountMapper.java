@@ -32,7 +32,7 @@ public interface DmUserAccountMapper {
     List<ExamResDTO> getExamList(Integer rowCount);
 
     List<ExamConfigDetailResDTO> getExamConf(Long userId);
-    Integer addRecord(ExamRecordReqDTO examRecordReqDTO);
+    Long addRecord(ExamRecordReqDTO examRecordReqDTO);
 
     Integer addRecordDetail(List<RecordDetailReqDTO> list,Integer reId);
 

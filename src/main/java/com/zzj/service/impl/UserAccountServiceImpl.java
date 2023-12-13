@@ -4,6 +4,7 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.XmlUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.zzj.constant.CommonConstants;
@@ -13,15 +14,13 @@ import com.zzj.entity.SysUser;
 import com.zzj.entity.SysUserAccount;
 import com.zzj.enums.ErrorCode;
 import com.zzj.exception.CommonException;
+import com.zzj.mapper.LogMapper;
 import com.zzj.mapper.UserAccountMapper;
 import com.zzj.mapperDM.DmUserAccountMapper;
 import com.zzj.mapperEip.EipUserAccountMapper;
 import com.zzj.service.UserAccountService;
 import com.zzj.shiro.CurrentLoginUser;
-import com.zzj.utils.CrytogramUtil;
-import com.zzj.utils.FileUtil;
-import com.zzj.utils.SnowFlakeIdUtils;
-import com.zzj.utils.TokenUtil;
+import com.zzj.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -45,6 +44,7 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -88,6 +88,9 @@ public class UserAccountServiceImpl implements UserAccountService {
     private DmUserAccountMapper dmUserAccountMapper;
 
     @Autowired
+    private LogMapper logMapper;
+
+    @Autowired
     private RestTemplate restTemplate;
 
     @Resource(name = "zzj2SqlSessionFactory")
@@ -96,17 +99,21 @@ public class UserAccountServiceImpl implements UserAccountService {
     private String MDM_USER_CARD_URL = "http://esb.wzmtr.com:7003/mdmwebservice/ps/getAllCardList?wsdl";
 
     @Override
-    public String getUser(UserLoginReqDTO userLoginReqDTO) {
+    public String getUser(UserLoginReqDTO userLoginReqDTO, HttpServletRequest request) {
         SystemUserResDTO user = null;
+        String loginType = "";
         switch (userLoginReqDTO.getLoginType()){
             case CommonConstants.LOGIN_TYPE_NORMAL:
                 user = loginByPwd(userLoginReqDTO);
+                loginType = "ZZJ_PWD";
                 break;
             case CommonConstants.LOGIN_TYPE_CARD:
                 user = loginByCard(userLoginReqDTO);
+                loginType = "ZZJ_CARD";
                 break;
             case CommonConstants.LOGIN_TYPE_FACE:
                 user = loginByFace(userLoginReqDTO);
+                loginType = "ZZJ_FACE";
                 break;
             default:
                 break;
@@ -114,8 +121,30 @@ public class UserAccountServiceImpl implements UserAccountService {
         if (Objects.isNull(user)) {
             throw new CommonException(ErrorCode.USER_OR_PWD_ERROR);
         }
+        insertLoginLog(user, userLoginReqDTO, loginType, request);
         CurrentLoginUser currentLoginUser = new CurrentLoginUser(user.getUserId(),user.getUserName(),user.getUserViewName(),user.getIamUserId());
         return TokenUtil.createSimpleToken(currentLoginUser);
+    }
+
+    /**
+     * 登录日志录入
+     * @param user 用户信息
+     * @param userLoginReqDTO 用户登录信息
+     * @param loginType 登录类型
+     * @param request 请求体
+     */
+    private void insertLoginLog(SystemUserResDTO user, UserLoginReqDTO userLoginReqDTO, String loginType, HttpServletRequest request) {
+        String loginJson = JSONObject.toJSONString(userLoginReqDTO);
+        log.info("=====登录信息JSON:" + loginJson);
+        LoginLogReqDTO loginLogReqDTO = new LoginLogReqDTO();
+        loginLogReqDTO.setIamUserId(user.getIamUserId());
+        loginLogReqDTO.setLoginType(loginType);
+        loginLogReqDTO.setUserName(user.getUserName());
+        loginLogReqDTO.setIp(IpUtils.getIpAddr(request));
+        loginLogReqDTO.setUserAgent(request.getHeader("User-Agent"));
+        loginLogReqDTO.setLoginJson(loginJson);
+        loginLogReqDTO.setId(snowflakeGenerator.next());
+        logMapper.insertLoginLog(loginLogReqDTO);
     }
 
     @Override
@@ -169,7 +198,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         List<RecordDetailReqDTO> recordDetailList = new ArrayList<>();
         for(int i = 0; i<examList.length; i++){
             RecordDetailReqDTO recordDetail = new RecordDetailReqDTO();
-            recordDetail.setRelExamId(Integer.parseInt(examList[i].toString()));
+            recordDetail.setRelExamId(Long.parseLong(examList[i].toString()));
             recordDetail.setRelAnswer(examAnswer[i].toString());
             if((examAnswer[i]+"").equals(examCorrect[i]+"")){
                 recordDetail.setRelCorrect(1);
@@ -186,7 +215,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         er.setRePercent((double)(Math.round((examList.length - errCount)*100/examList.length)/100.0));
 
         try{
-            Integer rec = dmUserAccountMapper.addRecord(er);
+            Long rec = dmUserAccountMapper.addRecord(er);
             if(rec > 0){
                 dmUserAccountMapper.addRecordDetail(recordDetailList,er.getReId());
             }
@@ -207,7 +236,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         res.setAttentime(timeChange(res.getAttentime()));
         res.setOfftime(timeChange(res.getOfftime()));
         List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(res.getId());
-        if(workList.size() == 0){
+        if(workList.isEmpty()){
             res.setAttendFlag(0);
             res.setQuitFlag(0);
         }else if(workList.size() == 1){
@@ -393,7 +422,9 @@ public class UserAccountServiceImpl implements UserAccountService {
         //TODO 根据物理卡号 获取员工信息  从数据共享平台申请调用 员工卡信息接口  目前还没有 20231124
         //query api userNo
         String uuid = userLoginReqDTO.getCardNo();
+        log.info("=====登录卡号 before uuid：" + uuid);
         uuid = cardChange(uuid);
+        log.info("=====登录卡号 after uuid：" + uuid);
         try{
             SysUserCardResDTO user1 = dmUserAccountMapper.getUserByCard(uuid);
             SystemUserResDTO user = eipUserAccountMapper.getUserByName(user1.getUserNo());

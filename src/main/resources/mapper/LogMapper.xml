@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zzj.mapper.LogMapper">
+
+    <insert id="insertLoginLog">
+        INSERT INTO IAM_LOGIN_TRACE
+        (TENANT_ID, USER_TYPE, USER_ID, AUTH_TYPE, AUTH_ACCOUNT, IP_ADDRESS, USER_AGENT, IS_SUCCESS, CREATE_TIME, ID, PARAMS)
+        VALUES(0, 'IamUser', #{iamUserId}, #{loginType}, #{userName}, #{ip}, #{userAgent}, 1, systimestamp, #{id}, #{loginJson})
+    </insert>
+
+</mapper>

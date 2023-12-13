@@ -2,7 +2,7 @@ package com.zzj.utils;
 
 
 import org.springframework.util.Base64Utils;
-import sun.misc.BASE64Encoder;
+import org.apache.commons.codec.binary.Base64;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -26,8 +26,7 @@ public class CrytogramUtil
       localMessageDigest.reset();
       byte[] arrayOfByte1 = paramString1.getBytes();
       byte[] arrayOfByte2 = localMessageDigest.digest(arrayOfByte1);
-      BASE64Encoder localBASE64Encoder = new BASE64Encoder();
-      return localBASE64Encoder.encode(arrayOfByte2);
+      return Base64.encodeBase64String(arrayOfByte2);
     } catch (NoSuchAlgorithmException localNoSuchAlgorithmException) {
       localNoSuchAlgorithmException.printStackTrace();
     }

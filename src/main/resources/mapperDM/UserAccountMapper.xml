@@ -327,7 +327,7 @@
     </insert>
 
     <insert id="addRecord" parameterType="com.zzj.dto.req.ExamRecordReqDTO" useGeneratedKeys="true" keyProperty="reId">
-        <selectKey keyProperty="reId" order="BEFORE" resultType="java.lang.Integer">
+        <selectKey keyProperty="reId" order="BEFORE" resultType="java.lang.Long">
             select ISEQ_EXAM_RECORD_ID.nextval from dual
         </selectKey>
         insert into RECORD

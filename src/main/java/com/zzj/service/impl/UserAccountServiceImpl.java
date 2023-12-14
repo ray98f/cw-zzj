@@ -164,7 +164,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         user.setPositionList(positionList);
 
         // 查询当日三交三问已通过的记录
-        Integer recordCount = dmUserAccountMapper.getPassRecordCount(currentLoginUser.getUserId());
+        Integer recordCount = dmUserAccountMapper.getPassRecordCount(currentLoginUser.getUserId(), null);
         if (recordCount > 0) {
             user.setThreeCheck(1);
         } else {
@@ -178,11 +178,11 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         List<ExamResDTO> list = new ArrayList<>();
         List<ExamConfigDetailResDTO> cnfList = dmUserAccountMapper.getExamConf(currentLoginUser.getUserId());
-        if(cnfList.size() == 0){
-            list = dmUserAccountMapper.getExamList(CommonConstants.DEFAULT_EXAM_COUNT + 1 );
+        if (cnfList.isEmpty()) {
+            list = dmUserAccountMapper.getExamList(CommonConstants.DEFAULT_EXAM_COUNT + 1);
         } else {
-            for(ExamConfigDetailResDTO cnf : cnfList){
-                list.addAll(dmUserAccountMapper.getExamByCnf(cnf.getExamtypeId(),cnf.getExamnum()+1));
+            for (ExamConfigDetailResDTO cnf : cnfList) {
+                list.addAll(dmUserAccountMapper.getExamByCnf(cnf.getExamtypeId(), cnf.getExamnum() + 1));
             }
         }
         return list;
@@ -196,30 +196,31 @@ public class UserAccountServiceImpl implements UserAccountService {
         Object[] examCorrect = paraMap.get("examCorrect").toArray();
         int errCount = 0;
         List<RecordDetailReqDTO> recordDetailList = new ArrayList<>();
-        for(int i = 0; i<examList.length; i++){
+        for (int i = 0; i < examList.length; i++) {
             RecordDetailReqDTO recordDetail = new RecordDetailReqDTO();
             recordDetail.setRelExamId(Long.parseLong(examList[i].toString()));
             recordDetail.setRelAnswer(examAnswer[i].toString());
-            if((examAnswer[i]+"").equals(examCorrect[i]+"")){
+            if ((examAnswer[i] + "").equals(examCorrect[i] + "")) {
                 recordDetail.setRelCorrect(1);
-            }else{
+            } else {
                 errCount += 1;
                 recordDetail.setRelCorrect(0);
             }
             recordDetailList.add(recordDetail);
         }
         ExamRecordReqDTO er = new ExamRecordReqDTO();
+        er.setReId(snowflakeGenerator.next());
         er.setUserId(currentLoginUser.getUserId());
         er.setReCount(examList.length);
         er.setReCountError(errCount);
-        er.setRePercent((double)(Math.round((examList.length - errCount)*100/examList.length)/100.0));
+        er.setRePercent(Math.round((float) (((examList.length - errCount) * 100) / examList.length)) / 100.0);
 
-        try{
-            Long rec = dmUserAccountMapper.addRecord(er);
-            if(rec > 0){
-                dmUserAccountMapper.addRecordDetail(recordDetailList,er.getReId());
+        try {
+            Integer result = dmUserAccountMapper.addRecord(er);
+            if (result > 0) {
+                dmUserAccountMapper.addRecordDetail(recordDetailList, er.getReId());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new CommonException(ErrorCode.INSERT_ERROR);
         }
         return er;

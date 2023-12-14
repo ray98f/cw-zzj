@@ -372,6 +372,7 @@
                         console.log(res)
                         if (res.code == 0) {
                             console.log("对比成功");
+                            setCookie("faceShow", "");
                             $("#faceTip").html("校验成功");
                             console.log("token:" + res.data);
                             setCookie("userToken", res.data, 7);

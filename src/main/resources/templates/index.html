@@ -130,6 +130,7 @@
 
                         // 判断当前用户是否采集了人脸
                         if (userInfo.faceFlag == 0) {
+                            setCookie("faceShow", "");
                             // 未采集跳转到人脸采集页面
                             location.href = "/zzj/faceBind.html";
                         } else {

@@ -50,7 +50,10 @@
         SELECT
         COUNT(1)
         FROM RECORD r
-        WHERE trunc(RE_DATE)=trunc(sysdate) AND RE_PERCENT= 1 AND RE_USER_ID = #{userId}
+        WHERE trunc(RE_DATE)=trunc(sysdate) AND RE_USER_ID = #{userId}
+        <if test="type!=null">
+            AND RE_PERCENT= 1
+        </if>
     </select>
 
     <select id="getExamList" resultType="com.zzj.dto.res.ExamResDTO">
@@ -326,13 +329,10 @@
         )
     </insert>
 
-    <insert id="addRecord" parameterType="com.zzj.dto.req.ExamRecordReqDTO" useGeneratedKeys="true" keyProperty="reId">
-        <selectKey keyProperty="reId" order="BEFORE" resultType="java.lang.Long">
-            select ISEQ_EXAM_RECORD_ID.nextval from dual
-        </selectKey>
+    <insert id="addRecord" parameterType="com.zzj.dto.req.ExamRecordReqDTO">
         insert into RECORD
-        ( re_id,re_user_id,re_type,re_date,re_percent,re_count,re_count_error)
-        values ( #{reId},#{userId},1,sysdate,#{rePercent},#{reCount},#{reCountError})
+        (re_id,re_user_id,re_type,re_date,re_percent,re_count,re_count_error)
+        values (#{reId},#{userId},1,sysdate,#{rePercent},#{reCount},#{reCountError})
     </insert>
 
     <insert id="addRecordDetail">

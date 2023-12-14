@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class ExamRecordReqDTO {
 
-    private Integer reId;
+    private Long reId;
     private Long userId;
     private Double rePercent;
     private Integer reCount;

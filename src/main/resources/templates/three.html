@@ -314,14 +314,16 @@
 
                             if(res.code == 0){
                                 if( res.data.reCountError > 0 ){
-                                   //未通过
-                                    $parent.messager.confirm('考试结果', "本次考试共有"+ (res.data.reCount) +"道题，您有" + (res.data.reCountError) + "道题错误！重考一次？", function(r) {
-                                            if (r) {
-                                                location.reload();
-                                            }else{
-                                                location.href = "/zzj/index.html";
-                                            }
-                                        });
+                                    //未通过
+                                    $parent.messager.alert("考试结果", "本次考试共有"+ (res.data.reCount) +"道题，您有" + (res.data.reCountError) + "道题错误！");
+                                    location.href = "/zzj/index.html";
+                                    // $parent.messager.confirm('考试结果', "本次考试共有"+ (res.data.reCount) +"道题，您有" + (res.data.reCountError) + "道题错误！重考一次？", function(r) {
+                                    //         if (r) {
+                                    //             location.reload();
+                                    //         }else{
+                                    //             location.href = "/zzj/index.html";
+                                    //         }
+                                    //     });
                                 } else {
                                     $parent.messager.alert("考试结果", "正确率100%,您已通过本次考试！");
                                     location.href = "/zzj/index.html";

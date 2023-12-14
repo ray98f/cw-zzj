@@ -26,15 +26,15 @@ public interface DmUserAccountMapper {
 
     List<UserPositionResDTO> getUserPosition(Long userId);
 
-    Integer getPassRecordCount(Long userId);
+    Integer getPassRecordCount(Long userId, Integer type);
 
     List<ExamResDTO> getExamByCnf(Long typeId ,Integer rowCount);
     List<ExamResDTO> getExamList(Integer rowCount);
 
     List<ExamConfigDetailResDTO> getExamConf(Long userId);
-    Long addRecord(ExamRecordReqDTO examRecordReqDTO);
+    Integer addRecord(ExamRecordReqDTO examRecordReqDTO);
 
-    Integer addRecordDetail(List<RecordDetailReqDTO> list,Integer reId);
+    Integer addRecordDetail(List<RecordDetailReqDTO> list,Long reId);
 
     DutyDetailResDTO getDutyInfo(Long userId);
 

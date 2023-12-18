@@ -26,7 +26,7 @@ public class TrainScheduleDTO {
     private String stationName;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    @ApiModelProperty(value = "车辆ID")
+    @ApiModelProperty(value = "车站id")
     private Long stationId;
 
     @ApiModelProperty(value = "车站类型1始发站 2终点站")

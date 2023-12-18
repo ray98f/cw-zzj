@@ -38,13 +38,20 @@ public interface DmUserAccountMapper {
 
     DutyDetailResDTO getDutyInfo(Long userId);
 
-    DutyDetailResDTO getNextDutyInfo(String userId,String recDate);
+    DutyDetailResDTO getNextDutyInfo(Long userId,String recDate);
 
     List<DmAttendQuitResDTO> getAttendQuit(Long crId);
 
     Integer dutyOn(AttendQuitReqDTO attendQuitReqDTO);
 
     Integer dutyOff(AttendQuitReqDTO attendQuitReqDTO);
+
+    /**
+     * 根据用户排班信息获取详细排班信息
+     * @param list 用户排班信息列表
+     * @return 排班信息
+     */
+    List<TrainScheduleDTO> getTrainSchedulesDetail(List<UserDutyReqDTO> list);
 
     List<TrainScheduleDTO> getTrainSchedules(List<String> list);
 

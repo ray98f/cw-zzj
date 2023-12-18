@@ -33,7 +33,7 @@ public interface UserAccountService {
 
     String dutyOff(CurrentLoginUser currentLoginUser,AttendQuitReqDTO attendQuitReqDTO);
 
-    List<TrainScheduleDTO> orderInit(CurrentLoginUser currentLoginUser, String stringRunList);
+    List<TrainScheduleDTO> orderInit(String stringRunList);
 
     String saveOrder(OrderReqDTO orderInfo);
 

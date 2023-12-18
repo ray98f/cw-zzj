@@ -94,9 +94,8 @@ public class UserAccountController {
 
     @PostMapping("/orderInit")
     @ApiOperation(value = "报单信息")
-    public DataResponse<List<TrainScheduleDTO>> orderInfo(@CurrUser CurrentLoginUser currentLoginUser, @RequestBody Map<String,String> param) {
-
-        return DataResponse.of(userAccountService.orderInit(currentLoginUser,param.get("stringRunList")));
+    public DataResponse<List<TrainScheduleDTO>> orderInfo(@RequestBody Map<String,String> param) {
+        return DataResponse.of(userAccountService.orderInit(param.get("stringRunList")));
     }
 
     @PostMapping("/saveOrder")

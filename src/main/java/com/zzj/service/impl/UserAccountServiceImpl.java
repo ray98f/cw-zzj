@@ -163,7 +163,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         user.setPositionNameStr(positionStr.toString());
         user.setPositionList(positionList);
 
-        // 查询当日三交三问已通过的记录
+        // 查询当日三交三问的记录
         Integer recordCount = dmUserAccountMapper.getPassRecordCount(currentLoginUser.getUserId(), null);
         if (recordCount > 0) {
             user.setThreeCheck(1);
@@ -255,7 +255,7 @@ public class UserAccountServiceImpl implements UserAccountService {
     @Override
     public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser, String recDate) {
         try{
-            DutyDetailResDTO res = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getPersonId(),recDate);
+            DutyDetailResDTO res = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(),recDate);
             if(res != null){
                 res.setAttentime(timeChange(res.getAttentime()));
                 res.setOfftime(timeChange(res.getOfftime()));
@@ -298,13 +298,15 @@ public class UserAccountServiceImpl implements UserAccountService {
     }
 
     @Override
-    public List<TrainScheduleDTO> orderInit(CurrentLoginUser currentLoginUser, String stringRunList) {
+    public List<TrainScheduleDTO> orderInit(String stringRunList) {
         if(StringUtils.isEmpty(stringRunList)){
             return null;
         }
-        List<String> trainIds = Arrays.asList(stringRunList.split(CommonConstants.TRAIN_SPLIT));
-        List<TrainScheduleDTO> res = dmUserAccountMapper.getTrainSchedules(trainIds);
-        return res;
+        List<UserDutyReqDTO> trains = JSONArray.parseArray(stringRunList, UserDutyReqDTO.class);
+        if (trains != null && !trains.isEmpty()) {
+            return dmUserAccountMapper.getTrainSchedulesDetail(trains);
+        }
+        return null;
     }
 
     @Override

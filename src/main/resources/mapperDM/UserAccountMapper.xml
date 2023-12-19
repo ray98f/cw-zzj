@@ -16,7 +16,7 @@
 
     <select id="getUserDetail" resultType="com.zzj.dto.res.UserAccountDetailResDTO">
         select
-        t1.ID as user_id,
+        t2.ID as user_id,
         t2.FACE_FLAG,
         t2.USER_NUM as user_name,
         t2.REALNAME as user_view_name,

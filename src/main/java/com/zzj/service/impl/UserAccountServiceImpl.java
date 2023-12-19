@@ -156,7 +156,7 @@ public class UserAccountServiceImpl implements UserAccountService {
     public UserAccountDetailResDTO userDetail(CurrentLoginUser currentLoginUser) {
         UserAccountDetailResDTO user = dmUserAccountMapper.getUserDetail(currentLoginUser.getPersonId());
         if (Objects.isNull(user)) {
-            throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
+            throw new CommonException(ErrorCode.USER_INFO_NOT_EXIST);
         }
         user.setDutyDetail(getDutyInfo(currentLoginUser));
         List<UserPositionResDTO> positionList = dmUserAccountMapper.getUserPosition(currentLoginUser.getUserId());
@@ -234,7 +234,7 @@ public class UserAccountServiceImpl implements UserAccountService {
     public DutyDetailResDTO getDutyInfo(CurrentLoginUser currentLoginUser) {
         DutyDetailResDTO dutyInfo = dmUserAccountMapper.getDutyInfo(currentLoginUser.getUserId());
         if (dutyInfo == null) {
-            throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
+            throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
         }
         if (!Objects.isNull(dutyInfo.getCrName())) {
             if (Arrays.stream(DUTY_REST).anyMatch(rest -> dutyInfo.getCrName().contains(rest))) {
@@ -285,7 +285,7 @@ public class UserAccountServiceImpl implements UserAccountService {
             }
             return dutyInfo;
         }catch (Exception e) {
-            throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
+            throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
         }
     }
 

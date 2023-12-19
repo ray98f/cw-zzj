@@ -40,4 +40,14 @@ public class ExamResDTO {
     @ApiModelProperty(value = "正确")
     private String answerCorrect;
 
+    /**
+     * 题目类型
+     */
+    private String examType;
+
+    /**
+     * 题目类型名称
+     */
+    private String examTypeName;
+
 }

@@ -40,6 +40,13 @@ public interface DmUserAccountMapper {
 
     DutyDetailResDTO getNextDutyInfo(Long userId,String recDate);
 
+    /**
+     * 获取派班人员
+     * @param classType 排班类型
+     * @return 派班人员姓名
+     */
+    String getDispatchUser(String classType);
+
     List<DmAttendQuitResDTO> getAttendQuit(Long crId);
 
     Integer dutyOn(AttendQuitReqDTO attendQuitReqDTO);
@@ -54,6 +61,14 @@ public interface DmUserAccountMapper {
     List<TrainScheduleDTO> getTrainSchedulesDetail(List<UserDutyReqDTO> list);
 
     List<TrainScheduleDTO> getTrainSchedules(List<String> list);
+
+    /**
+     * 判断人员在指定日期是否已派单
+     * @param date 日期
+     * @param driverId 工号
+     * @return 是否已报单 0 否 1 是
+     */
+    Integer getHadSaveOrder(String date, String driverId);
 
     Integer saveOrderInfo(OrderReqDTO orderInfo);
 

@@ -124,14 +124,16 @@
         }
 
         function gotoIndex(){
-            location.href = "/zzj/index.html";
+            // location.href = "/zzj/index.html";
+            electron.loadPage('./src/index.html')
         }
         // 登出
         function logout() {
             clearCookie("userToken");
             clearCookie("userInfo");
             clearCookie("dutyInfo");
-            location.href="/zzj/login.html";
+            // location.href="/zzj/login.html";
+            electron.loadPage('./src/login.html')
         }
     </script>
 </head>

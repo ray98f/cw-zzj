@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author frp
@@ -97,6 +98,10 @@ public class UserAccountServiceImpl implements UserAccountService {
     private SqlSessionFactory zzj2SqlSessionFactory;
 
     private String MDM_USER_CARD_URL = "http://esb.wzmtr.com:7003/mdmwebservice/ps/getAllCardList?wsdl";
+
+    private final String[] DUTY_REST = new String[] {"孕","年","产","病","疗","事","育","独","丧","婚","护","调","休"};
+
+    private final String[] CROSSING_ROAD_TYPE = new String[] {"指导司机", "司机长", "调车"};
 
     @Override
     public String getUser(UserLoginReqDTO userLoginReqDTO, HttpServletRequest request) {
@@ -149,12 +154,11 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     public UserAccountDetailResDTO userDetail(CurrentLoginUser currentLoginUser) {
-        //
         UserAccountDetailResDTO user = dmUserAccountMapper.getUserDetail(currentLoginUser.getPersonId());
         if (Objects.isNull(user)) {
             throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
         }
-
+        user.setDutyDetail(getDutyInfo(currentLoginUser));
         List<UserPositionResDTO> positionList = dmUserAccountMapper.getUserPosition(currentLoginUser.getUserId());
         StringBuilder positionStr = new StringBuilder(",");
         for (UserPositionResDTO position : positionList){
@@ -228,39 +232,58 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     public DutyDetailResDTO getDutyInfo(CurrentLoginUser currentLoginUser) {
-
-        DutyDetailResDTO res = dmUserAccountMapper.getDutyInfo(currentLoginUser.getUserId());
-        if(res == null || CommonConstants.OFF_CR_NAME.equals(res.getCrName())){
-            //未排班
+        DutyDetailResDTO dutyInfo = dmUserAccountMapper.getDutyInfo(currentLoginUser.getUserId());
+        if (dutyInfo == null) {
             throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
         }
-        res.setAttentime(timeChange(res.getAttentime()));
-        res.setOfftime(timeChange(res.getOfftime()));
-        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(res.getId());
-        if(workList.isEmpty()){
-            res.setAttendFlag(0);
-            res.setQuitFlag(0);
-        }else if(workList.size() == 1){
-            res.setAttendFlag(1);
-            res.setQuitFlag(0);
-        }else {
-            res.setAttendFlag(1);
-            res.setQuitFlag(1);
+        if (!Objects.isNull(dutyInfo.getCrName())) {
+            if (Arrays.stream(DUTY_REST).anyMatch(rest -> dutyInfo.getCrName().contains(rest))) {
+                dutyInfo.setIsWork(1);
+            } else {
+                dutyInfo.setIsWork(0);
+            }
         }
-        res.setWorkRecord(workList);
-
-        return res;
+        if (!Objects.isNull(dutyInfo.getCrossingRoadTypeName())) {
+            if (Arrays.stream(CROSSING_ROAD_TYPE).anyMatch(type -> dutyInfo.getCrossingRoadTypeName().contains(type))) {
+                dutyInfo.setIsSpecialType(0);
+            } else {
+                dutyInfo.setIsSpecialType(1);
+            }
+        }
+        dutyInfo.setDispatchUser(dmUserAccountMapper.getDispatchUser(dutyInfo.getClassType()));
+        dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
+        dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
+        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId());
+        if (workList.isEmpty()) {
+            dutyInfo.setAttendFlag(0);
+            dutyInfo.setQuitFlag(0);
+        } else if (workList.size() == 1) {
+            dutyInfo.setAttendFlag(1);
+            dutyInfo.setQuitFlag(0);
+        } else {
+            dutyInfo.setAttendFlag(1);
+            dutyInfo.setQuitFlag(1);
+        }
+        dutyInfo.setWorkRecord(workList);
+        return dutyInfo;
     }
 
     @Override
     public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser, String recDate) {
         try{
-            DutyDetailResDTO res = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(),recDate);
-            if(res != null){
-                res.setAttentime(timeChange(res.getAttentime()));
-                res.setOfftime(timeChange(res.getOfftime()));
+            DutyDetailResDTO dutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(),recDate);
+            if(!Objects.isNull(dutyInfo)){
+                dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
+                dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
+                if (!Objects.isNull(dutyInfo.getCrName())) {
+                    if (Arrays.stream(DUTY_REST).anyMatch(rest -> dutyInfo.getCrName().contains(rest))) {
+                        dutyInfo.setIsNextWork(1);
+                    } else {
+                        dutyInfo.setIsNextWork(0);
+                    }
+                }
             }
-            return res;
+            return dutyInfo;
         }catch (Exception e) {
             throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
         }
@@ -311,18 +334,29 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String saveOrder(OrderReqDTO orderInfo) {
-
-        try{
+    public void saveOrder(OrderReqDTO orderInfo) {
+        Integer res = dmUserAccountMapper.getHadSaveOrder(orderInfo.getDate(), orderInfo.getDriverId());
+        if (res > 0) {
+            return;
+        }
+        try {
             orderInfo.setId(snowflakeGenerator.next());
-            Integer res = dmUserAccountMapper.saveOrderInfo(orderInfo);
-            if(res > 0){
-                dmUserAccountMapper.addOrderDetail(orderInfo.getList(),orderInfo.getId());
+            res = dmUserAccountMapper.saveOrderInfo(orderInfo);
+            boolean orderInfoEmpty = orderInfo.getList() != null && !orderInfo.getList().isEmpty();
+            if (res > 0 && orderInfoEmpty) {
+                List<OrderDetailReqDTO> list = orderInfo.getList();
+                list = list.stream().filter(OrderDetailReqDTO -> OrderDetailReqDTO.getTrainNum() != null).collect(Collectors.toList());
+                List<OrderDetailReqDTO> reqList = new ArrayList<>();
+                list.forEach(p -> {
+                    if (!reqList.contains(p)) {
+                        reqList.add(p);
+                    }
+                });
+                dmUserAccountMapper.addOrderDetail(reqList, orderInfo.getId());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new CommonException(ErrorCode.INSERT_ERROR);
         }
-        return orderInfo.getId()+"";
     }
 
     @Override

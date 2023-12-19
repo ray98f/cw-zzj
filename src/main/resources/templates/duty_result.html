@@ -96,7 +96,7 @@
     <script type="text/javascript" src="./static/js/cross_browser_fix.js"></script>
     <script type="text/javascript" src="./static/js/global.js"></script>
     <title>出勤完成</title>
-    <link href="./static/css/zzj_css.css" rel="stylesheet" type="text/css">s
+    <link href="./static/css/zzj_css.css" rel="stylesheet" type="text/css">
     <link href="./static/lib/keyboard/css/keyboard.css" type="text/css" rel="stylesheet" />
     <link href="./static/lib/keyboard/css/jquery-ui.min.css" type="text/css" rel="stylesheet" />
     <script language="javascript" type="text/javascript" src="./static/lib/keyboard/js/jquery.keyboard.js"></script>
@@ -130,26 +130,28 @@
             $("#zhongxin2").hide();
         }
         function gotoIndex(){
-            location.href = "/zzj/index.html";
+            // location.href = "/zzj/index.html";
+            electron.loadPage('./src/index.html')
         }
         // 登出
         function logout() {
             clearCookie("userToken");
             clearCookie("userInfo");
             clearCookie("dutyInfo");
-            location.href="/zzj/login.html";
+            // location.href="/zzj/login.html";
+            electron.loadPage('./src/login.html')
         }
     </script>
 </head>
-<body style="">
+<body >
 <div class="zzj_subpage_wrap">
         <div class="top"><div class="top_left">温州市域轨道交通乘务自助终端系统</div></div>
         <div class="subpage_main">
             <div id="zhongxin2" class="zzj_loading" style="display:none"></div>
             <div id="zhongxin"></div>
             <div class="btn_box bottom_btn_box">
-                <input type="button" class="btn" id="btn_last" onclick="gotoIndex()" value="返回首页"/>
-                <input type="button" class="btn" id="btn_quit" onclick="logout()" value="退出系统">
+                <!-- <input type="button" class="btn" id="btn_last" onclick="gotoIndex()" value="返回首页"/> -->
+                <input type="button" class="btn" id="btn_quit" onclick="logout()" value="退出登录">
             </div>
     </div>
 </div>

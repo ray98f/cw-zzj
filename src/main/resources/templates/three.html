@@ -101,6 +101,8 @@
     <script>
         checkToken();
         var userToken = getCookie("userToken");
+        console.log('有无',userToken);
+        // debugger
         var userInfo;
         userInfo = JSON.parse(getCookie("userInfo"));
         var correct_count = 0;
@@ -155,7 +157,7 @@
 
         function getExamList(){
             $.ajax({
-                    url:"/zzj/user/examList",
+                    url:"http://nocm.wzmtr.com:2443/zzj/user/examList",
                     type:"GET",
                     dataType:"json",
                     beforeSend: function (request) {
@@ -174,7 +176,8 @@
                     },
                     error:function () {
                        console.log("...")
-                       location.href = "/zzj/index.html";
+                    //    location.href = "/zzj/index.html";
+                       electron.loadPage('./src/index.html')
                     }
             });
         }
@@ -189,6 +192,7 @@
                 var exam_tpl =  '<div id="extam-{{examId}}" data-id="{{i}}" class="oneQuestion showQuestion">'+
                                 '        <div id="div_question" align="left">'+
                                 '            <span id="span_content">{{examText}}</span>'+
+                                '            <span id="span_content">[{{examTypeName}}]</span>'+
                                 '        </div>'+
                                 '        <div id="div_answer">'+
                                 '            <table id="table_answer" cellpadding="0" cellspacing="5">'+
@@ -208,6 +212,7 @@
                 exam_tpl = exam_tpl.replace("{{i}}",i);
                 exam_tpl = exam_tpl.replace("{{j}}",i+1);
                 exam_tpl = exam_tpl.replace("{{examText}}",n.examText);
+                exam_tpl = exam_tpl.replace("{{examTypeName}}",n.examTypeName);
                 //<tr><td class="option" id="ans_{{O}}" title="{{O}}">{{O}}：{{option}}</td></tr>
                 var option_html = "";
                 if(n.optionA != null && n.optionA != ""){
@@ -284,7 +289,8 @@
             });
         }
         function gotoIndex(){
-            location.href = "/zzj/index.html";
+            // location.href = "/zzj/index.html";
+            electron.loadPage('./src/index.html')
         }
 
 
@@ -302,7 +308,7 @@
             }
             if(saveLock == 0){
                 $.ajax({
-                        url:"/zzj/user/examSave",
+                        url:"http://nocm.wzmtr.com:2443/zzj/user/examSave",
                         type:"POST",
                         data:JSON.stringify({"examList":exam_list,"examAnswer":exam_answer,"examCorrect":exam_correct}),
                         dataType:"json",
@@ -320,14 +326,17 @@
                                     // location.href = "/zzj/index.html";
                                     $parent.messager.confirm('考试结果', "本次考试共有"+ (res.data.reCount) +"道题，您有" + (res.data.reCountError) + "道题错误！", function(r) {
                                             if (r) {
-                                                location.href = "/zzj/index.html";
+                                                // location.href = "/zzj/index.html";
+                                                electron.loadPage('./src/index.html')
                                             }else{
-                                                location.href = "/zzj/index.html";
+                                                // location.href = "/zzj/index.html";
+                                                electron.loadPage('./src/index.html')
                                             }
                                         });
                                 } else {
                                     $parent.messager.alert("考试结果", "正确率100%,您已通过本次考试！");
-                                    location.href = "/zzj/index.html";
+                                    // location.href = "/zzj/index.html";
+                                    electron.loadPage('./src/index.html')
                                 }
                             }else{
                                 $parent.messager.alert('提示', res.message, 'info');

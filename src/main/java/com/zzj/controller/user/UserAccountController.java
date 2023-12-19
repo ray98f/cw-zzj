@@ -101,7 +101,7 @@ public class UserAccountController {
     @PostMapping("/saveOrder")
     @ApiOperation(value = "报单")
     public DataResponse<String> saveOrder(@RequestBody OrderReqDTO orderInfo){
-        String res = userAccountService.saveOrder(orderInfo);
+        userAccountService.saveOrder(orderInfo);
         return DataResponse.success();
     }
 

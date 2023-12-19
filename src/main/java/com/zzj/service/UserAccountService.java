@@ -35,7 +35,7 @@ public interface UserAccountService {
 
     List<TrainScheduleDTO> orderInit(String stringRunList);
 
-    String saveOrder(OrderReqDTO orderInfo);
+    void saveOrder(OrderReqDTO orderInfo);
 
     List<TrainStationResDTO> getStationList(String trainNum);
 

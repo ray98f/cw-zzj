@@ -1,34 +1,24 @@
-// 获取cookies
-function setCookie(cname, cvalue, exdays) {
-	var d = new Date();
-    d.setTime(d.getTime() + (exdays*24*60*60*1000));
-    var expires = "expires="+d.toUTCString();
-    document.cookie = cname + "=" + cvalue + "; " + expires;
+function setCookie(cname,cvalue) {
+    localStorage.setItem(cname, cvalue);
 }
 
-// 获取cookies
+// 获取 Token
 function getCookie(cname) {
-	var name = cname + "=";
-    var ca = document.cookie.split(';');
-    for(var i=0; i<ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0)==' ') c = c.substring(1);
-        if (c.indexOf(name) != -1) return c.substring(name.length, c.length);
-    }
-    return "";
+    return localStorage.getItem(cname);
 }
 
-//清除cookie  
-function clearCookie(name) {  
-    setCookie(name, "", -1);  
-}  
+// 清除 Token
+function clearCookie(cname) {
+    localStorage.removeItem(cname);
+}
 
 function checkToken() {
     var userToken = getCookie("userToken");
-    if (userToken != "") {
+    if (userToken != null && userToken !== '') {
         console.log("Welcome again " + userToken);
     } else {
-        location.href = "/zzj/login.html";
+        // location.href = "/zzj/login.html";
+        electron.loadPage('./src/login.html')
     }
 }
 

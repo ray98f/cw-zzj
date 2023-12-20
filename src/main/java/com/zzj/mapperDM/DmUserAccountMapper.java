@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.SqlParser;
 import com.zzj.dto.req.*;
 import com.zzj.dto.res.*;
 import io.swagger.models.auth.In;
+import jdk.nashorn.internal.parser.Token;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
 
@@ -47,7 +48,13 @@ public interface DmUserAccountMapper {
      */
     String getDispatchUser(String classType);
 
-    List<DmAttendQuitResDTO> getAttendQuit(Long crId);
+    /**
+     * 获取出退勤情况
+     * @param crId 排班id
+     * @param userId 用户id
+     * @return
+     */
+    List<DmAttendQuitResDTO> getAttendQuit(Long crId, Long userId);
 
     Integer dutyOn(AttendQuitReqDTO attendQuitReqDTO);
 

@@ -169,7 +169,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         // 查询当日三交三问的记录
         Integer recordCount = dmUserAccountMapper.getPassRecordCount(currentLoginUser.getUserId(), null);
-        if (recordCount > 0) {
+        if (recordCount > 0 || user.getDutyDetail().getAttendFlag() == 1) {
             user.setThreeCheck(1);
         } else {
             user.setThreeCheck(0);
@@ -253,7 +253,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         dutyInfo.setDispatchUser(dmUserAccountMapper.getDispatchUser(dutyInfo.getClassType()));
         dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
         dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
-        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId());
+        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId(), currentLoginUser.getUserId());
         if (workList.isEmpty()) {
             dutyInfo.setAttendFlag(0);
             dutyInfo.setQuitFlag(0);

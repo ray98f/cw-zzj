@@ -161,7 +161,7 @@
             WORK_TYPE,
             ACTION_TIME
         FROM NEW_DRIVER_ATTEND_QUIT
-        WHERE NEW_SCHEDULING_ID = #{crId}
+        WHERE NEW_SCHEDULING_ID = #{crId} and CLOCK_IN_USER=#{userId}
     </select>
 
     <select id="getTrainSchedulesDetail" resultType="com.zzj.dto.res.TrainScheduleDTO">

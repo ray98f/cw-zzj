@@ -237,7 +237,7 @@ public class UserAccountServiceImpl implements UserAccountService {
             throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
         }
         if (!Objects.isNull(dutyInfo.getCrName())) {
-            if (Arrays.stream(DUTY_REST).anyMatch(rest -> dutyInfo.getCrName().contains(rest))) {
+            if (Arrays.stream(DUTY_REST).anyMatch(rest -> dutyInfo.getCrName().equals(rest))) {
                 dutyInfo.setIsWork(1);
             } else {
                 dutyInfo.setIsWork(0);

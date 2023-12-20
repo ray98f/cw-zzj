@@ -42,19 +42,19 @@ public class CommonController {
 
     @ApiOperation(value = "登录")
     @PostMapping(value = "/login")
-    public DataResponse<String> login(@RequestBody UserLoginReqDTO userLoginReqDTO) {
-        String Token = userAccountService.getUser(userLoginReqDTO);
+    public DataResponse<String> login(@RequestBody UserLoginReqDTO userLoginReqDTO, HttpServletRequest request) {
+        String Token = userAccountService.getUser(userLoginReqDTO, request);
         return DataResponse.of(Token);
     }
 
     //faceCompare 逻辑有点问题
     @GetMapping("/user/faceCompare")
     @ApiOperation(value = "人脸比对")
-    public DataResponse<String> featureList(@RequestParam String id) {
+    public DataResponse<String> featureList(@RequestParam String id, HttpServletRequest request) {
         UserLoginReqDTO userLoginReqDTO = new UserLoginReqDTO();
         userLoginReqDTO.setLoginType(CommonConstants.LOGIN_TYPE_FACE);
         userLoginReqDTO.setUsername(id);
-        String Token = userAccountService.getUser(userLoginReqDTO);
+        String Token = userAccountService.getUser(userLoginReqDTO, request);
         return DataResponse.of(Token);
     }
 

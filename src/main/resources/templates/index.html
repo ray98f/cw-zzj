@@ -10,6 +10,15 @@
         input::-ms-clear {
             display: none;
         }
+
+        .display-btn {
+            opacity: 0;
+            width: 200px;
+            height: 200px;
+            position: fixed;
+            right: 0;
+            top: 0;
+        }
     </style>
     <script type="text/javascript">
         top.fingerprintFlag = false;
@@ -103,19 +112,23 @@
     <link href="./static/css/zzj_css.css" rel="stylesheet" type="text/css">
 
     <script>
+        // debugger
         checkToken();
-
+        var flag
+        var threecheckflag;
         var userInfo;
         var dutyInfo;
         var socket;
         var threecheck = 0;
         var userToken = getCookie("userToken");
         getUserInfo();
-        getUserDuty();
+        // getUserDuty();
 
         function getUserInfo() {
             $.ajax({
-                url: "/zzj/user/info",
+                url: "http://nocm.wzmtr.com:2443/zzj/user/info",
+                // url: "http://192.168.34.128:9501/zzj/user/info",
+                
                 type: "GET",
                 dataType: "json",
                 beforeSend: function (request) {
@@ -123,19 +136,39 @@
                     request.setRequestHeader("Authorization", userToken);
                 },
                 success: function (res) {
+                  flag=res.data.dutyDetail.isWork===1
+                  console.log(flag,'flag')
+                //   if (flag) {
+                  
+             
+                //   // document.querySelector('#threeMsg').innerHTML = "您今日为休班，无需出勤"
+            
+                
+                //     $("#btn_on").hide();
+                //     $("#btn_off").hide();
+                //     $("#btn_threecheck").hide();
+                //     return;
+                // }
                     console.log(res)
                     if (res.code == 0) {
                         userInfo = res.data;
-                        setCookie("userInfo", JSON.stringify(userInfo));
-
-                        // 判断当前用户是否采集了人脸
-                        if (userInfo.faceFlag == 0) {
-                            // 未采集跳转到人脸采集页面
-                            location.href = "/zzj/faceBind.html";
-                        } else {
-                            // 已采集刷新当前页面
-                            showMain(userInfo);
+                        if(res.data.threeCheck==0&&userInfo.positionNameStr.indexOf('司机长')===-1&&userInfo.positionNameStr.indexOf('指导司机')===-1){
+                          $("#btn_on").hide();
                         }
+                        setCookie("userInfo", JSON.stringify(userInfo));
+                        showMain(userInfo);
+                        // // 判断当前用户是否采集了人脸 
+                        // if (userInfo.faceFlag == 0) {
+                        //     setCookie("faceShow", "");
+                        //     // 未采集跳转到人脸采集页面
+                        //     // location.href = "/zzj/faceBind.html";
+                        //     electron.loadPage('./src/faceBind.html')
+
+                        // } else {
+                        //     // 已采集刷新当前页面
+                        //     showMain(userInfo);
+                        // }
+                        getUserDuty()
                     } else {
                         console.log("无此用户信息");
                     }
@@ -148,7 +181,8 @@
 
         function getUserDuty() {
             $.ajax({
-                url: "/zzj/user/dutyInfo",
+                url: "http://nocm.wzmtr.com:2443/zzj/user/dutyInfo",
+                // url: "http://192.168.34.128:9501/zzj/user/dutyInfo",
                 type: "GET",
                 dataType: "json",
                 beforeSend: function (request) {
@@ -156,20 +190,31 @@
                     request.setRequestHeader("Authorization", userToken);
                 },
                 success: function (res) {
-                    console.log(res)
+                    console.log(res,'res')
                     if (res.code == 0) {
                         dutyInfo = res.data;
+                      //  const flag= dutyInfo.crName in ['孕','年','产','病','疗','事','育','独','丧','婚','护','调','休']
+                      // const flag=['孕','年','产','病','疗','事','育','独','丧','婚','护','调','休'].includes(dutyInfo.crName)
+       
+                     
+                                
                         setCookie("dutyInfo", JSON.stringify(dutyInfo));
                         if (dutyInfo == null) {
                             $("#btn_on").hide();
                             $("#btn_off").hide();
+                            $("#btn_threecheck").hide();
                             return;
                         }
-
+           
                         if (dutyInfo.attendFlag == 1) {
                             $("#btn_on").hide();
-                        } else {
-                            $("#btn_on").show();
+                        } 
+                        else {
+                          
+                          if(threecheck===1){
+                            console.log('已显示')
+                            $("#btn_on").show();}
+                           
                         }
 
                         if (dutyInfo.quitFlag == 1) {
@@ -199,7 +244,7 @@
                 '    <div class="text1">' +
                 '        <p>欢迎<span class="bold pad10">{{name}}</span></p>' +
                 '        <p>现在是{{date}} {{timeArea}}</p>' +
-                '        <p>{{threeMsg}}</p>' +
+                '        <p id="threeMsg">{{threeMsg}}</p>' +
                 '        <p>您的职位是【<span class="bold">{{roleName}}</span>】,请选择您所需要的服务:</p>' +
                 '    </div>' +
                 '</div>';
@@ -208,13 +253,21 @@
             .getDate() + "日");
             html_tpl = html_tpl.replace("{{timeArea}}", timeArea);
             if (trimComma(userInfo.positionNameStr) == '司机') {
+              if(flag){
+                html_tpl = html_tpl.replace("{{threeMsg}}", "您今日为休班，无需出勤");
+                $("#btn_on").hide();
+                    $("#btn_off").hide();
+                    $("#btn_threecheck").hide();
+              }else{
                 if (threecheck == 0) {
                     html_tpl = html_tpl.replace("{{threeMsg}}", "您还未完成今日的三交三问");
                     $("#btn_threecheck").show();
                 } else {
-                    html_tpl = html_tpl.replace("{{threeMsg}}", "您已完成今日的三交三问");
+                    html_tpl = html_tpl.replace("{{threeMsg}}", "您已经完成今日的三交三问");
                     $("#btn_threecheck").hide();
                 }
+              }
+      
             } else {
                 html_tpl = html_tpl.replace("{{threeMsg}}", "");
                 $("#btn_threecheck").hide();
@@ -229,6 +282,7 @@
 </head>
 
 <body style="">
+    <button id="myButton" class="display-btn">点击按钮</button>
     <div class="zzj_subpage_wrap">
         <div class="top">
             <div class="top_left">温州市域轨道交通乘务自助终端系统</div>
@@ -245,17 +299,31 @@
                 <input type="button" class="btn" id="btn_threecheck" value="三交三问">
                 <input type="button" class="btn" id="btn_on" onclick="onDuty()" value="出勤">
                 <input type="button" class="btn" id="btn_off" style="display:none;" onclick="offDuty()" value="退勤">
-                <input type="button" class="btn" id="btn_quit" onclick="logout()" value="退出系统">
+                <input type="button" class="btn" id="btn_quit" onclick="logout()" value="退出登录">
             </div>
         </div>
     </div>
     <script type="text/javascript">
+
+        //点击五次关闭
+        $(document).ready(function () {
+            var clickCount = 0
+            $('#myButton').click(function () {
+                clickCount++;
+
+                if (clickCount >= 5) {
+                    electron.closePage();
+                }
+            });
+        });
+
         $("#btn_threecheck").click(function (e) {
             if (threecheck == 1) {
-                $parent.messager.alert('提示', '你已经完成了今日的三交三问！', 'info');
+                $parent.messager.alert('提示', '您已经完成今日的三交三问！', 'info');
                 return;
             }
-            location.href = "/zzj/three.html";
+            // location.href = "/zzj/three.html";
+            electron.loadPage('./src/three.html')
         })
 
         // 出勤
@@ -266,7 +334,8 @@
                 $parent.messager.alert('提示', '请先完成今日的三交三问！', 'info');
                 return;
             } else {
-                location.href = "/zzj/duty.html";
+                // location.href = "/zzj/duty.html";
+                electron.loadPage('./src/duty.html')
                 $("#zhongxin").hide();
                 $("#zhongxin2").show();
             }
@@ -274,7 +343,8 @@
 
         // 退勤
         function offDuty() {
-            location.href = "/zzj/off_duty.html";
+            // location.href = "/zzj/off_duty.html";
+            electron.loadPage('./src/off_duty.html')
             $("#zhongxin").hide();
             $("#zhongxin2").show();
 
@@ -285,7 +355,8 @@
             clearCookie("userToken");
             clearCookie("userInfo");
             clearCookie("dutyInfo");
-            location.href = "/zzj/login.html";
+            // location.href = "/zzj/login.html";
+            electron.loadPage('./src/login.html')
         }
     </script>
 </body>

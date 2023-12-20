@@ -88,4 +88,43 @@ public class DutyDetailResDTO {
 
     @ApiModelProperty(value = "出退勤记录")
     private List<DmAttendQuitResDTO> workRecord;
+
+    /**
+     * 班次类型
+     */
+    private String classType;
+
+    /**
+     * 当日是否排班（0 排班 1 未排班）
+     * "孕","年","产","病","疗","事","育","独","丧","婚","护","调","休"
+     */
+    private Integer isWork;
+
+    /**
+     * 次日是否排班（0 排班 1 未排班）
+     * "孕","年","产","病","疗","事","育","独","丧","婚","护","调","休"
+     */
+    private Integer isNextWork;
+
+    /**
+     * 交路类型id
+     */
+    private Long crossingRoadTypeId;
+
+    /**
+     * 交路类型名称
+     */
+    private String crossingRoadTypeName;
+
+    /**
+     * 是否为特殊交路类型（0 特殊 1 不特殊）
+     * 特殊包含 指导司机、司机长、调车
+     */
+    private Integer isSpecialType;
+
+    /**
+     * 排班人员
+     */
+    private String dispatchUser;
+
 }

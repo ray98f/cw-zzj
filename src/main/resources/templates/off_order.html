@@ -171,7 +171,7 @@
                             '        <td>退勤时间：</td>'+
                             '        <td>{{offtime}}</td>'+
                             '        <td>派班人员：</td>'+
-                            '        <td></td>'+
+                            '        <td>{{dispatchUser}}</td>'+
                             '    </tr>'+
                             '</table>';
             var a = ["日", "一", "二", "三", "四", "五", "六"];                
@@ -187,6 +187,7 @@
             userTpl = userTpl.replace("{{tableName}}",dutyInfo.tableName);
             userTpl = userTpl.replace("{{attentime}}",dutyInfo.attentime);
             userTpl = userTpl.replace("{{offtime}}",dutyInfo.offtime);
+            userTpl = userTpl.replace("{{dispatchUser}}",dutyInfo.dispatchUser);
             $("#user_Div").append(userTpl);
             $("#miles").val(dutyInfo.miles);
             $("#whours").val(dutyInfo.whours);
@@ -227,7 +228,11 @@
 
             //var trainArr = dutyInfo.stringruntrain.split("--->");
             var listStr = "";
-            if(startRunCrossingroad.length > 0){
+            //startRunCrossingroad改成0
+      if(startRunCrossingroad===null){
+        startRunCrossingroad=0
+      }
+            if(startRunCrossingroad.length >= 0){
                 $.each(startRunCrossingroad,function(i,n){
                     var listTpl =   '<tr class="{{itemId}}" name="add_tr">'+
                                     '    <input type="hidden" name="mile" value=""/>'+
@@ -274,16 +279,20 @@
 
         function getDutyTrain(dutyInfo){ 
             startRunCrossingroad = JSON.parse(dutyInfo.startRunCrossingroad);
-            if(startRunCrossingroad.length > 0){
+            if(startRunCrossingroad===null){
+        startRunCrossingroad=0
+      }
+            if(startRunCrossingroad.length >= 0){
                 $.each(startRunCrossingroad,function(i,n){
                     stringRunList += n.train + ",";
                 });
                 stringRunList = (stringRunList.substring(stringRunList.length - 1) == ",") ? stringRunList.substring(0, stringRunList.length - 1) : stringRunList;
             }
             $.ajax({
-                url:"/zzj/user/orderInit",
+                url:"http://nocm.wzmtr.com:2443/zzj/user/orderInit",
                 type:"POST",
-                data:JSON.stringify({"stringRunList":stringRunList}),
+                // data:JSON.stringify({"stringRunList":stringRunList}),
+                data:JSON.stringify({"stringRunList":dutyInfo.startRunCrossingroad}),
                 dataType:"json",
                 beforeSend: function (request) {
                     request.setRequestHeader("Content-Type", "application/json");
@@ -292,6 +301,7 @@
                 success:function (res) {
                     console.log(res);
                     if(res.code == 0){
+                      
                         renderTrainInfo(userInfo,dutyInfo,res.data);
                     }else{
                         //$parent.messager.alert('提示', res.message, 'info');
@@ -313,17 +323,24 @@
             orderInfo.kilometer = $("#miles").val();
             orderInfo.workHour = $("#whours").val();
             orderInfo.schedule = dutyInfo.id;
-
+            driveArr=[],
             $.each(list,function(i,n){
-                driveArr.push(n);
+           
+              if(!$.isEmptyObject(n)){
+                driveArr.push(n);   
+              }
+                
             })
             orderInfo.list = driveArr;
-
+            console.log(orderInfo.list,'list')
 
             if(saveLock == 0){
+              console.log(JSON.stringify(orderInfo),'list2')
+             
                 saveLock = 1;
                 $.ajax({
-                    url:"/zzj/user/saveOrder",
+                    url:"http://nocm.wzmtr.com:2443/zzj/user/saveOrder",
+                      // url: "http://192.168.34.128:9501/zzj/user/saveOrder",
                     type:"POST",
                     data:JSON.stringify(orderInfo),
                     dataType:"json",
@@ -335,7 +352,52 @@
                         console.log(res)
                         saveLock = 0;
                         if(res.code == 0){
-                           location.href = "/zzj/order_result.html";
+                          if(dutyInfo.isSpecialType===1){
+        $.ajax({
+                url:"http://nocm.wzmtr.com:2443/zzj/user/dutyOff",
+              
+                type:"POST",
+                data:JSON.stringify({"userId":userInfo.userId,"newSchedulingId":dutyInfo.id}),
+                dataType:"json",
+                beforeSend: function (request) {
+                    request.setRequestHeader("Content-Type", "application/json");
+                    request.setRequestHeader("Authorization", userToken);
+                },
+                success:function (res) {
+                    console.log(res)
+
+                    if(res.code == 0){
+                  
+                        // if(dutyInfo.attendQuitRecord){
+                        //     dutyInfo.attendQuitRecord.quitTime = res.data;
+                        // }else{
+                        //     dutyInfo.attendQuitRecord = {};
+                        //     dutyInfo.attendQuitRecord.quitTime = res.data;
+                        // }
+                        var workRecordQuit = {"workType":"2","actionTime":res.data};
+                        dutyInfo.workRecord.push(workRecordQuit);
+                        if(dutyInfo.attendQuitRecord == null){
+                            dutyInfo.attendQuitRecord = {};
+                        }
+                        dutyInfo.attendQuitRecord.quitTime = res.data;
+                        dutyInfo.quitFlag = 1;
+                        setCookie("dutyInfo",JSON.stringify(dutyInfo));
+                    //    location.href = "/zzj/off_result.html";
+                      
+                       
+                    }else{
+                        $parent.messager.alert('提示', res.message, 'info');
+                    }
+                    
+                },
+                error:function () {
+                   
+                }
+            });
+      }
+                
+                        //    location.href = "/zzj/order_result.html";
+                           electron.loadPage('./src/order_result.html')
                         }else{
                             //$parent.messager.alert('提示', res.message, 'info');
                             showError();
@@ -434,7 +496,7 @@
         function getStations(obj){
             var trainNum = $(obj).val();
             $.ajax({
-                url:"/zzj/user/stationList?trainNum="+trainNum,
+                url:"http://nocm.wzmtr.com:2443/zzj/user/stationList?trainNum="+trainNum,
                 type:"GET",
                 dataType:"json",
                 beforeSend: function (request) {
@@ -470,7 +532,8 @@
             $(obj).parent().find(".station-list").show();
         }
         function gotoIndex(){
-            location.href = "/zzj/index.html";
+            // location.href = "/zzj/index.html";
+            electron.loadPage('./src/index.html')
         }
     </script>
 </head>

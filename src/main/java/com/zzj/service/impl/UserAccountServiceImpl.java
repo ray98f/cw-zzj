@@ -4,6 +4,7 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.XmlUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.zzj.constant.CommonConstants;
@@ -13,15 +14,13 @@ import com.zzj.entity.SysUser;
 import com.zzj.entity.SysUserAccount;
 import com.zzj.enums.ErrorCode;
 import com.zzj.exception.CommonException;
+import com.zzj.mapper.LogMapper;
 import com.zzj.mapper.UserAccountMapper;
 import com.zzj.mapperDM.DmUserAccountMapper;
 import com.zzj.mapperEip.EipUserAccountMapper;
 import com.zzj.service.UserAccountService;
 import com.zzj.shiro.CurrentLoginUser;
-import com.zzj.utils.CrytogramUtil;
-import com.zzj.utils.FileUtil;
-import com.zzj.utils.SnowFlakeIdUtils;
-import com.zzj.utils.TokenUtil;
+import com.zzj.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -45,12 +44,14 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author frp
@@ -88,6 +89,9 @@ public class UserAccountServiceImpl implements UserAccountService {
     private DmUserAccountMapper dmUserAccountMapper;
 
     @Autowired
+    private LogMapper logMapper;
+
+    @Autowired
     private RestTemplate restTemplate;
 
     @Resource(name = "zzj2SqlSessionFactory")
@@ -95,18 +99,26 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     private String MDM_USER_CARD_URL = "http://esb.wzmtr.com:7003/mdmwebservice/ps/getAllCardList?wsdl";
 
+    private final String[] DUTY_REST = new String[] {"孕","年","产","病","疗","事","育","独","丧","婚","护","调","休"};
+
+    private final String[] CROSSING_ROAD_TYPE = new String[] {"指导司机", "司机长", "调车"};
+
     @Override
-    public String getUser(UserLoginReqDTO userLoginReqDTO) {
+    public String getUser(UserLoginReqDTO userLoginReqDTO, HttpServletRequest request) {
         SystemUserResDTO user = null;
+        String loginType = "";
         switch (userLoginReqDTO.getLoginType()){
             case CommonConstants.LOGIN_TYPE_NORMAL:
                 user = loginByPwd(userLoginReqDTO);
+                loginType = "ZZJ_PWD";
                 break;
             case CommonConstants.LOGIN_TYPE_CARD:
                 user = loginByCard(userLoginReqDTO);
+                loginType = "ZZJ_CARD";
                 break;
             case CommonConstants.LOGIN_TYPE_FACE:
                 user = loginByFace(userLoginReqDTO);
+                loginType = "ZZJ_FACE";
                 break;
             default:
                 break;
@@ -114,18 +126,39 @@ public class UserAccountServiceImpl implements UserAccountService {
         if (Objects.isNull(user)) {
             throw new CommonException(ErrorCode.USER_OR_PWD_ERROR);
         }
+        insertLoginLog(user, userLoginReqDTO, loginType, request);
         CurrentLoginUser currentLoginUser = new CurrentLoginUser(user.getUserId(),user.getUserName(),user.getUserViewName(),user.getIamUserId());
         return TokenUtil.createSimpleToken(currentLoginUser);
     }
 
+    /**
+     * 登录日志录入
+     * @param user 用户信息
+     * @param userLoginReqDTO 用户登录信息
+     * @param loginType 登录类型
+     * @param request 请求体
+     */
+    private void insertLoginLog(SystemUserResDTO user, UserLoginReqDTO userLoginReqDTO, String loginType, HttpServletRequest request) {
+        String loginJson = JSONObject.toJSONString(userLoginReqDTO);
+        log.info("=====登录信息JSON:" + loginJson);
+        LoginLogReqDTO loginLogReqDTO = new LoginLogReqDTO();
+        loginLogReqDTO.setIamUserId(user.getIamUserId());
+        loginLogReqDTO.setLoginType(loginType);
+        loginLogReqDTO.setUserName(user.getUserName());
+        loginLogReqDTO.setIp(IpUtils.getIpAddr(request));
+        loginLogReqDTO.setUserAgent(request.getHeader("User-Agent"));
+        loginLogReqDTO.setLoginJson(loginJson);
+        loginLogReqDTO.setId(snowflakeGenerator.next());
+        logMapper.insertLoginLog(loginLogReqDTO);
+    }
+
     @Override
     public UserAccountDetailResDTO userDetail(CurrentLoginUser currentLoginUser) {
-        //
         UserAccountDetailResDTO user = dmUserAccountMapper.getUserDetail(currentLoginUser.getPersonId());
         if (Objects.isNull(user)) {
-            throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
+            throw new CommonException(ErrorCode.USER_INFO_NOT_EXIST);
         }
-
+        user.setDutyDetail(getDutyInfo(currentLoginUser));
         List<UserPositionResDTO> positionList = dmUserAccountMapper.getUserPosition(currentLoginUser.getUserId());
         StringBuilder positionStr = new StringBuilder(",");
         for (UserPositionResDTO position : positionList){
@@ -134,8 +167,8 @@ public class UserAccountServiceImpl implements UserAccountService {
         user.setPositionNameStr(positionStr.toString());
         user.setPositionList(positionList);
 
-        // 查询当日三交三问已通过的记录
-        Integer recordCount = dmUserAccountMapper.getPassRecordCount(currentLoginUser.getUserId());
+        // 查询当日三交三问的记录
+        Integer recordCount = dmUserAccountMapper.getPassRecordCount(currentLoginUser.getUserId(), null);
         if (recordCount > 0) {
             user.setThreeCheck(1);
         } else {
@@ -149,11 +182,11 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         List<ExamResDTO> list = new ArrayList<>();
         List<ExamConfigDetailResDTO> cnfList = dmUserAccountMapper.getExamConf(currentLoginUser.getUserId());
-        if(cnfList.size() == 0){
-            list = dmUserAccountMapper.getExamList(CommonConstants.DEFAULT_EXAM_COUNT + 1 );
+        if (cnfList.isEmpty()) {
+            list = dmUserAccountMapper.getExamList(CommonConstants.DEFAULT_EXAM_COUNT + 1);
         } else {
-            for(ExamConfigDetailResDTO cnf : cnfList){
-                list.addAll(dmUserAccountMapper.getExamByCnf(cnf.getExamtypeId(),cnf.getExamnum()+1));
+            for (ExamConfigDetailResDTO cnf : cnfList) {
+                list.addAll(dmUserAccountMapper.getExamByCnf(cnf.getExamtypeId(), cnf.getExamnum() + 1));
             }
         }
         return list;
@@ -167,30 +200,31 @@ public class UserAccountServiceImpl implements UserAccountService {
         Object[] examCorrect = paraMap.get("examCorrect").toArray();
         int errCount = 0;
         List<RecordDetailReqDTO> recordDetailList = new ArrayList<>();
-        for(int i = 0; i<examList.length; i++){
+        for (int i = 0; i < examList.length; i++) {
             RecordDetailReqDTO recordDetail = new RecordDetailReqDTO();
-            recordDetail.setRelExamId(Integer.parseInt(examList[i].toString()));
+            recordDetail.setRelExamId(Long.parseLong(examList[i].toString()));
             recordDetail.setRelAnswer(examAnswer[i].toString());
-            if((examAnswer[i]+"").equals(examCorrect[i]+"")){
+            if ((examAnswer[i] + "").equals(examCorrect[i] + "")) {
                 recordDetail.setRelCorrect(1);
-            }else{
+            } else {
                 errCount += 1;
                 recordDetail.setRelCorrect(0);
             }
             recordDetailList.add(recordDetail);
         }
         ExamRecordReqDTO er = new ExamRecordReqDTO();
+        er.setReId(snowflakeGenerator.next());
         er.setUserId(currentLoginUser.getUserId());
         er.setReCount(examList.length);
         er.setReCountError(errCount);
-        er.setRePercent((double)(Math.round((examList.length - errCount)*100/examList.length)/100.0));
+        er.setRePercent(Math.round((float) (((examList.length - errCount) * 100) / examList.length)) / 100.0);
 
-        try{
-            Integer rec = dmUserAccountMapper.addRecord(er);
-            if(rec > 0){
-                dmUserAccountMapper.addRecordDetail(recordDetailList,er.getReId());
+        try {
+            Integer result = dmUserAccountMapper.addRecord(er);
+            if (result > 0) {
+                dmUserAccountMapper.addRecordDetail(recordDetailList, er.getReId());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new CommonException(ErrorCode.INSERT_ERROR);
         }
         return er;
@@ -198,41 +232,60 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     public DutyDetailResDTO getDutyInfo(CurrentLoginUser currentLoginUser) {
-
-        DutyDetailResDTO res = dmUserAccountMapper.getDutyInfo(currentLoginUser.getUserId());
-        if(res == null || CommonConstants.OFF_CR_NAME.equals(res.getCrName())){
-            //未排班
-            throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
+        DutyDetailResDTO dutyInfo = dmUserAccountMapper.getDutyInfo(currentLoginUser.getUserId());
+        if (dutyInfo == null) {
+            throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
         }
-        res.setAttentime(timeChange(res.getAttentime()));
-        res.setOfftime(timeChange(res.getOfftime()));
-        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(res.getId());
-        if(workList.size() == 0){
-            res.setAttendFlag(0);
-            res.setQuitFlag(0);
-        }else if(workList.size() == 1){
-            res.setAttendFlag(1);
-            res.setQuitFlag(0);
-        }else {
-            res.setAttendFlag(1);
-            res.setQuitFlag(1);
+        if (!Objects.isNull(dutyInfo.getCrName())) {
+            if (Arrays.stream(DUTY_REST).anyMatch(rest -> dutyInfo.getCrName().contains(rest))) {
+                dutyInfo.setIsWork(1);
+            } else {
+                dutyInfo.setIsWork(0);
+            }
         }
-        res.setWorkRecord(workList);
-
-        return res;
+        if (!Objects.isNull(dutyInfo.getCrossingRoadTypeName())) {
+            if (Arrays.stream(CROSSING_ROAD_TYPE).anyMatch(type -> dutyInfo.getCrossingRoadTypeName().contains(type))) {
+                dutyInfo.setIsSpecialType(0);
+            } else {
+                dutyInfo.setIsSpecialType(1);
+            }
+        }
+        dutyInfo.setDispatchUser(dmUserAccountMapper.getDispatchUser(dutyInfo.getClassType()));
+        dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
+        dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
+        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId());
+        if (workList.isEmpty()) {
+            dutyInfo.setAttendFlag(0);
+            dutyInfo.setQuitFlag(0);
+        } else if (workList.size() == 1) {
+            dutyInfo.setAttendFlag(1);
+            dutyInfo.setQuitFlag(0);
+        } else {
+            dutyInfo.setAttendFlag(1);
+            dutyInfo.setQuitFlag(1);
+        }
+        dutyInfo.setWorkRecord(workList);
+        return dutyInfo;
     }
 
     @Override
     public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser, String recDate) {
         try{
-            DutyDetailResDTO res = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getPersonId(),recDate);
-            if(res != null){
-                res.setAttentime(timeChange(res.getAttentime()));
-                res.setOfftime(timeChange(res.getOfftime()));
+            DutyDetailResDTO dutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(),recDate);
+            if(!Objects.isNull(dutyInfo)){
+                dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
+                dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
+                if (!Objects.isNull(dutyInfo.getCrName())) {
+                    if (Arrays.stream(DUTY_REST).anyMatch(rest -> dutyInfo.getCrName().contains(rest))) {
+                        dutyInfo.setIsNextWork(1);
+                    } else {
+                        dutyInfo.setIsNextWork(0);
+                    }
+                }
             }
-            return res;
+            return dutyInfo;
         }catch (Exception e) {
-            throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
+            throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
         }
     }
 
@@ -268,29 +321,42 @@ public class UserAccountServiceImpl implements UserAccountService {
     }
 
     @Override
-    public List<TrainScheduleDTO> orderInit(CurrentLoginUser currentLoginUser, String stringRunList) {
+    public List<TrainScheduleDTO> orderInit(String stringRunList) {
         if(StringUtils.isEmpty(stringRunList)){
             return null;
         }
-        List<String> trainIds = Arrays.asList(stringRunList.split(CommonConstants.TRAIN_SPLIT));
-        List<TrainScheduleDTO> res = dmUserAccountMapper.getTrainSchedules(trainIds);
-        return res;
+        List<UserDutyReqDTO> trains = JSONArray.parseArray(stringRunList, UserDutyReqDTO.class);
+        if (trains != null && !trains.isEmpty()) {
+            return dmUserAccountMapper.getTrainSchedulesDetail(trains);
+        }
+        return null;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String saveOrder(OrderReqDTO orderInfo) {
-
-        try{
+    public void saveOrder(OrderReqDTO orderInfo) {
+        Integer res = dmUserAccountMapper.getHadSaveOrder(orderInfo.getDate(), orderInfo.getDriverId());
+        if (res > 0) {
+            return;
+        }
+        try {
             orderInfo.setId(snowflakeGenerator.next());
-            Integer res = dmUserAccountMapper.saveOrderInfo(orderInfo);
-            if(res > 0){
-                dmUserAccountMapper.addOrderDetail(orderInfo.getList(),orderInfo.getId());
+            res = dmUserAccountMapper.saveOrderInfo(orderInfo);
+            boolean orderInfoEmpty = orderInfo.getList() != null && !orderInfo.getList().isEmpty();
+            if (res > 0 && orderInfoEmpty) {
+                List<OrderDetailReqDTO> list = orderInfo.getList();
+                list = list.stream().filter(OrderDetailReqDTO -> OrderDetailReqDTO.getTrainNum() != null).collect(Collectors.toList());
+                List<OrderDetailReqDTO> reqList = new ArrayList<>();
+                list.forEach(p -> {
+                    if (!reqList.contains(p)) {
+                        reqList.add(p);
+                    }
+                });
+                dmUserAccountMapper.addOrderDetail(reqList, orderInfo.getId());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new CommonException(ErrorCode.INSERT_ERROR);
         }
-        return orderInfo.getId()+"";
     }
 
     @Override
@@ -393,7 +459,9 @@ public class UserAccountServiceImpl implements UserAccountService {
         //TODO 根据物理卡号 获取员工信息  从数据共享平台申请调用 员工卡信息接口  目前还没有 20231124
         //query api userNo
         String uuid = userLoginReqDTO.getCardNo();
+        log.info("=====登录卡号 before uuid：" + uuid);
         uuid = cardChange(uuid);
+        log.info("=====登录卡号 after uuid：" + uuid);
         try{
             SysUserCardResDTO user1 = dmUserAccountMapper.getUserByCard(uuid);
             SystemUserResDTO user = eipUserAccountMapper.getUserByName(user1.getUserNo());

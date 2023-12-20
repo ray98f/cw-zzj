@@ -195,6 +195,8 @@
                     clearInterval(interval);
                     $("#wineTestContent").text(wine_test_content + "mg/100ml");
                     $("#wineTestResult").text("通过");
+                    //显示出勤
+                    $("#btn_on").show();
                     $("#msg").html('<p>酒测状态：<span class="bold">通过</span></p>');
                     send('{"event":"9","port":"COM6"}');
                     websocket.close();
@@ -265,9 +267,9 @@
                             '        </td>'+
                             '    </tr>'+
                             '    <tr>'+
-                            '        <td class="prompt" for="wineTestResult">测酒结果：</td>'+
+                            '        <td class="prompt" for="wineTestResult">酒测结果：</td>'+
                             '        <td class="promptCenter" id="wineTestResult"></td>'+
-                            '        <td class="prompt"><label for="wineTestContent">测酒含量：</label></td>'+
+                            '        <td class="prompt"><label for="wineTestContent">酒精含量：</label></td>'+
                             '        <td name="wineTestContent" value="" id="wineTestContent"></td>'+
                             '    </tr>'+
                             '    <tr>'+
@@ -291,7 +293,20 @@
             }
         }
         var saveLock = 0;
+        // console.log(1233)
+        document.addEventListener('DOMContentLoaded', function(){
+          if(userInfo.positionNameStr.indexOf('司机长')>-1||userInfo.positionNameStr.indexOf('指导司机')>-1){
+            $("#btn_on").show()
+            $("#btn_alcohol_check").hide()
+        }else{
+          $("#btn_on").hide()
+        }
+          
+        }, false)
         $(document).on("click", "#btn_on", function(){
+          if(userInfo.positionNameStr.indexOf('司机长')>-1||userInfo.positionNameStr.indexOf('指导司机')>-1){
+
+          }else{
             if(alcohol_check==0){
                 $parent.messager.alert('提示', '还未进行酒精测试', 'info');
                 return;
@@ -300,8 +315,10 @@
                 $parent.messager.alert('提示', '酒精测试未通过', 'info');
                 return;
             }
+          }
+            
             $.ajax({
-                url:"/zzj/user/dutyOn",
+                url:"http://nocm.wzmtr.com:2443/zzj/user/dutyOn",
                 type:"POST",
                 data:JSON.stringify({"userId":userInfo.userId,"newSchedulingId":dutyInfo.id,"recDate":dutyInfo.recDate,"alcoholTestStatus":"1","alcoholResult":alcohol_check_result}),
                 dataType:"json",
@@ -323,7 +340,8 @@
                         dutyInfo.attendQuitRecord.attendTime = res.data;
                         dutyInfo.attendFlag = 1;
                         setCookie("dutyInfo",JSON.stringify(dutyInfo));
-                       location.href = "/zzj/duty_result.html";
+                    //    location.href = "/zzj/duty_result.html";
+                       electron.loadPage('./src/duty_result.html')
                        
                     }else{
                         $parent.messager.alert('提示', res.message, 'info');
@@ -341,8 +359,9 @@
             alcohol_check_result = 0;
             console.log(document.getElementById("wineTestContent"));
             console.log(document.getElementById("wineTestResult"));
-
-            //wsaddr = wsaddr.replace("localhost",getCookie("clientIP"));
+            //测试酒精
+            // displayContent('浓度值:15');
+            // wsaddr = wsaddr.replace("localhost",getCookie("clientIP"));
             StartWebSocket(wsaddr);
 
              //$("#msg").html('<p>酒测状态：<span class="bold">吹气成功</span></p>');
@@ -354,7 +373,12 @@
 </head>
 <body style="">
 <div class="zzj_subpage_wrap">
-        <div class="top"><div class="top_left">温州市域轨道交通乘务自助终端系统</div></div>
+        <div class="top"><div class="top_left" style="display: flex; justify-content: space-between;"><div>温州市域轨道交通乘务自助终端系统</div>
+          <!-- <input style="margin-right: 20px;" type="button" class="btn" id="btn_close" onclick="closeapp()" value="退出系统"/> -->
+          <img src="./static/images/cancel.png" onerror="changeImg(this);" onclick="closeapp()"  class="img-border radius-none" style="width: 50px;height: 50px;margin-top: 15px;margin-right: 30px;"/>
+        </div>
+      
+      </div>
         <div class="subpage_main">
         <div id="zhongxin2" class="zzj_loading" style="display:none"></div>
         <div  id="zhongxin">
@@ -376,28 +400,36 @@
             </div>
             <div  class="msg" id="msg">
             </div>
-            <div class="btn_box">
+            <div style="width: 100%;position: absolute;bottom: 150px;">
+            <div class="btn_box" >
                 <!-- role 1073 1074 1078 -->
                     <!-- dutyMsg=='' -->
                 <input type="button" class="btn " id="btn_alcohol_check" value="酒测">
                 <input type="button" class="btn" id="btn_on" value="出勤">
-                <input type="button" class="btn" id="btn_last" onclick="gotoIndex()" value="返回首页"/>
-                <input type="button" class="btn" id="btn_quit" onclick="logout()" value="退出系统"/>
+                <!-- <input type="button" class="btn" id="btn_last" onclick="gotoIndex()" value="返回首页"/> -->
+                <input type="button" class="btn" id="btn_quit" onclick="logout()" value="退出登录"/>
+                <!-- <input type="button" class="btn" id="btn_close" onclick="closeapp()" value="退出系统"/> -->
             </div>
+          </div>
         </div>
         </div>
     </div>
 </div>
 <script type="text/javascript">
     function gotoIndex(){
-        location.href = "/zzj/index.html";
+        // location.href = "/zzj/index.html";
+        electron.loadPage('./src/index.html')
     }
     // 登出
     function logout() {
         clearCookie("userToken");
         clearCookie("userInfo");
         clearCookie("dutyInfo");
-        location.href="/zzj/login.html";
+        // location.href="/zzj/login.html";
+        electron.loadPage('./src/login.html')
+    }
+    function closeapp() {
+      electron.closePage();
     }
 </script>
 </body>

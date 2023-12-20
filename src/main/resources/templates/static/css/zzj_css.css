@@ -1,6 +1,14 @@
 @charset "utf-8";
 /* CSS Document */
-
+html{
+  height: 100%;
+}
+body{
+  height: 100%;
+}
+form{
+  height: 100%;
+}
 * {
     margin: 0;
     padding: 0;
@@ -15,13 +23,16 @@
 }
 
 .zzj_login_wrap {
-    width: 1920px;
-    height: 1080px;
+    width: 100%;
+    height: 100%;
+        /* width: 1920px;
+    height: 1080px; */
     background: url(../images/bg.jpg) center center no-repeat;
 }
 
 .space {
-    height: 200px;
+  /* height: 200px; */
+    height: 100px;
     clear: both;
 }
 
@@ -80,11 +91,18 @@
     top: 500px;
     font-family: "微软雅黑";
     font-size: 14px;
+    color: white;
+}
+.login_a:active {
+  color: blue;
 }
 
 .zzj_subpage_wrap {
-    width: 1920px;
-    height: 1080px;
+    width: 100%;
+    height: 100%;
+    /* height: 1080px; */
+    /* width: 500px; */
+    overflow: hidden;
     background: url(../images/subpage_bg.jpg) center center no-repeat;
 }
 .tab_img {
@@ -92,7 +110,8 @@
 }
 
 .zzj_loading {
-    width: 1920px;
+    /* width: 1920px; */
+    width: 100%;
     height: 1080px;
     background: url(../images/jiazai.gif) center center no-repeat;
 }
@@ -116,13 +135,18 @@
 .subpage_main {
     background: url(../images/sunpage_main.png) no-repeat;
     position: relative;
-    width: 1920px;
-    height: 999px;
+    width: 100%;
+    height: 100%;
+    /* width: 1920px; */
+    /* height: 999px; */
+    overflow: hidden;
 }
 
 .subpage_main_in {
-    width: 1900px;
-    height: 976px;
+    /* width: 1900px; */
+    /* height: 976px; */
+    width:100%;
+  height: 100%;
     overflow: auto;
     position: absolute;
     left: 13px;
@@ -131,9 +155,10 @@
 }
 
 .text1 p {
-    font-size: 60px;
+  width: 100%;
+    font-size: 45px;
     font-family: "微软雅黑";
-    line-height: 3em;
+    line-height: 2em;
     text-align: center;
 }
 .msg p{
@@ -167,6 +192,7 @@
 }
 
 .table_box {
+  height:60px
     padding: 20px;
 }
 
@@ -178,7 +204,7 @@
 .table_box table tr td {
     padding: 10px;
     font-family: "微软雅黑";
-    font-size: 42px;
+    /* font-size: 42px; */
     border: 1px solid #AAAAAA;
 }
 
@@ -231,6 +257,7 @@
 .c-both{clear:both;}
 .bottom_btn_box{
     position: absolute;
-    width: 1920px;
+    /* width: 1920px; */
+    width: 100%;
     bottom: 200px;
 }

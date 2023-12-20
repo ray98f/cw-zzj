@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class RecordDetailReqDTO {
 
-    private Integer relExamId;
+    private Long relExamId;
     private String relAnswer;
     private Integer relCorrect;
     private Integer relReId;

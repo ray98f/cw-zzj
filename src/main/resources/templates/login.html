@@ -10,6 +10,15 @@
         input::-ms-clear {
             display: none;
         }
+
+        .display-btn {
+            opacity: 0;
+            width: 200px;
+            height: 200px;
+            position: fixed;
+            right: 0;
+            top: 0;
+        }
     </style>
     <script type="text/javascript">
         top.fingerprintFlag = false;
@@ -26,7 +35,7 @@
                     })
                 });
             });
-        } catch (e) {}
+        } catch (e) { }
         //con,clearFlag是否清空选项
         function refreshGrid(con, clearFlag) {
             if (!con)
@@ -101,11 +110,17 @@
 </head>
 
 <body style="">
+  
+    <button id="myButton" class="display-btn">点击按钮</button>
     <form name="form" id="examLoginForm" method="post">
         <input type="hidden" id="loginFlag" name="loginFlag" value="0">
         <div class="zzj_login_wrap">
+          <img src="./static/images/cancel.png" onerror="changeImg(this);" onclick="closeapp()"  class="img-border radius-none" style="width: 50px;height: 50px;position: absolute;right:25px;top:25px"/>
             <div class="space"></div>
-            <div class="zzj_login_logo">温州市域轨道交通乘务自助终端</div>
+            <div class="zzj_login_logo" style="display: flex; justify-content: space-between;">
+              <div>温州市域轨道交通乘务自助终端</div>
+             
+            </div>
             <div class="zzj_login_login_box2" id="div_finger">
                 <input type="hidden" id="fingerPrint" name="fingertpl" value="">
                 <input type="hidden" id="ic_no" name="ic_no" value="">
@@ -122,7 +137,8 @@
                     id="user_password_box" value="" aria-haspopup="true" role="textbox">
                 <input type="hidden" id="password" name="user_password" value="">
                 <input type="button" class="zzj_login_enter" onclick="login('1');">
-                <a href="javascript:;" onclick="login_change('1');" class="login_a">人脸登录</a>
+                <a href="javascript:;" onclick="login_change('1');" class="login_a">返回首页</a>
+               
                 <div class="err"></div>
             </div>
             <input type="hidden" id="cardNo" name="cardNo" value="">
@@ -135,11 +151,22 @@
     <script language="javascript" type="text/javascript" src="./static/js/jquery.keyboard.js"></script>
     <script>
         var card_flag = 0;
+        //点击五次关闭
+        $(document).ready(function () {
+            var clickCount = 0
+            $('#myButton').click(function () {
+                clickCount++;
+
+                if (clickCount >= 5) {
+                    electron.closePage();
+                }
+            });
+        });
 
         function login(loginType) {
 
             $.ajax({
-                url: "/zzj/login",
+                url: "http://nocm.wzmtr.com:2443/zzj/login",
                 type: "POST",
                 data: JSON.stringify({
                     "username": $("#user_name_box_psw").val(),
@@ -156,7 +183,12 @@
                     if (res.code == 0) {
                         console.log("token:" + res.data);
                         setCookie("userToken", res.data, 7);
-                        location.href = "/zzj/index.html";
+                        var userToken = getCookie("userToken");
+                        console.log('getToken', userToken);
+                        // debugger
+                        electron.loadPage('./src/index.html')
+                        // location.href = "/zzj/index.html";
+                        // location.href = "./index.html";
                     } else {
                         card_flag = 0;
                     }
@@ -168,6 +200,9 @@
             });
         }
 
+        function closeapp() {
+      electron.closePage();
+    }
         function showKeyBoard() {
             $("#user_name_box_psw").keyboard({
                 layout: 'num',
@@ -262,7 +297,7 @@
 
         function getClientIp() {
             $.ajax({
-                url: "/zzj/ipAdd",
+                url: "http://nocm.wzmtr.com:2443/zzj/ipAdd",
                 type: "GET",
                 dataType: "json",
                 success: function (res) {
@@ -324,7 +359,9 @@
 
             // 进入人脸识别界面
             setCookie("faceShow", "1")
-            location.href = "/zzj/faceBind.html";
+            // location.href = "./faceBind.html";
+            electron.loadPage('./src/faceBind.html')
+            // location.href = "/zzj/faceBind.html";
         }
 
         function login_change(flag) {

@@ -231,8 +231,8 @@ function checkUserKey(){
             <div  class="msg" id="msg"></div>
             <div class="btn_box">
                 <input type="button" class="btn" id="btn_off" onclick="do_off()" value="退勤">
-                <input type="button" class="btn" id="btn_last" onclick="gotoIndex()" value="返回首页"/>
-                <input type="button" class="btn" id="btn_quit" onclick="logout()" value="退出系统"/>
+                <!-- <input type="button" class="btn" id="btn_last" onclick="gotoIndex()" value="返回首页"/> -->
+                <input type="button" class="btn" id="btn_quit" onclick="logout()" value="退出登录"/>
             </div>
         </div>
         </div>
@@ -240,8 +240,10 @@ function checkUserKey(){
 </div>
 <script type="text/javascript">
     function do_off(){
-            $.ajax({
-                url:"/zzj/user/dutyOff",
+      console.log(dutyInfo)
+      if(dutyInfo.isSpecialType!=1){
+        $.ajax({
+                url:"http://nocm.wzmtr.com:2443/zzj/user/dutyOff",
                 type:"POST",
                 data:JSON.stringify({"userId":userInfo.userId,"newSchedulingId":dutyInfo.id}),
                 dataType:"json",
@@ -251,7 +253,6 @@ function checkUserKey(){
                 },
                 success:function (res) {
                     console.log(res)
-
                     if(res.code == 0){
                         // if(dutyInfo.attendQuitRecord){
                         //     dutyInfo.attendQuitRecord.quitTime = res.data;
@@ -267,27 +268,33 @@ function checkUserKey(){
                         dutyInfo.attendQuitRecord.quitTime = res.data;
                         dutyInfo.quitFlag = 1;
                         setCookie("dutyInfo",JSON.stringify(dutyInfo));
-                       location.href = "/zzj/off_result.html";
-                       
+                        gotoIndex()
+                    //    location.href = "/zzj/off_result.html";                  
                     }else{
                         $parent.messager.alert('提示', res.message, 'info');
-                    }
-                    
+                    }      
                 },
                 error:function () {
                    
                 }
             });
+      }else{
+        electron.loadPage('./src/off_result.html')
+      }
+      
+    
     }
     function gotoIndex(){
-        location.href = "/zzj/index.html";
+        // location.href = "/zzj/index.html";
+        electron.loadPage('./src/index.html')
     }
     // 登出
     function logout() {
         clearCookie("userToken");
         clearCookie("userInfo");
         clearCookie("dutyInfo");
-        location.href="/zzj/login.html";
+        // location.href="/zzj/login.html";
+        electron.loadPage('./src/login.html')
     }
 </script>
 </body>

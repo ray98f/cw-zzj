@@ -239,7 +239,4 @@ public class TokenUtil {
         return result;
     }
 
-    public static void main(String[] args) throws Exception {
-        //todo test
-    }
 }

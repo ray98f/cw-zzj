@@ -7,6 +7,7 @@ import com.zzj.dto.req.UserLoginReqDTO;
 import com.zzj.dto.res.*;
 import com.zzj.shiro.CurrentLoginUser;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,7 @@ import java.util.Map;
 public interface UserAccountService {
 
 
-    String getUser(UserLoginReqDTO userLoginReqDTO);
+    String getUser(UserLoginReqDTO userLoginReqDTO, HttpServletRequest request);
 
     UserAccountDetailResDTO userDetail(CurrentLoginUser currentLoginUser);
 
@@ -32,9 +33,9 @@ public interface UserAccountService {
 
     String dutyOff(CurrentLoginUser currentLoginUser,AttendQuitReqDTO attendQuitReqDTO);
 
-    List<TrainScheduleDTO> orderInit(CurrentLoginUser currentLoginUser, String stringRunList);
+    List<TrainScheduleDTO> orderInit(String stringRunList);
 
-    String saveOrder(OrderReqDTO orderInfo);
+    void saveOrder(OrderReqDTO orderInfo);
 
     List<TrainStationResDTO> getStationList(String trainNum);
 

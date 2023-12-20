@@ -151,7 +151,17 @@ public enum ErrorCode {
 
     //external organization
     SUPPID_NOT_SAME(3200101, "suppid.should.not.same"),
-    USER_OR_PWD_ERROR(3200102, "user.or.pwd.error");
+    USER_OR_PWD_ERROR(3200102, "user.or.pwd.error"),
+
+    /**
+     * 用户信息不存在
+     */
+    USER_INFO_NOT_EXIST(3200105, "user.info.not.exist"),
+
+    /**
+     * 排班信息不存在
+     */
+    DUTY_INFO_NOT_EXIST(3200106, "duty.info.not.exist");
 
 
 

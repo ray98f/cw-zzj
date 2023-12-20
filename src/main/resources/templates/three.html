@@ -8,75 +8,75 @@
         input::-ms-clear { display: none; }
     </style>
     <script type="text/javascript">
-    top.fingerprintFlag=false;  
-    top.fingerReg=false;
-        var ctx = '/zzj';
-      try {
-        $(function() {
-          doFluidLayout();
-          $("input").each(function(i){//防止回车提交表单
-              $(this).bind("keypress",function(e){
-                  if(e.keyCode==13){
-                    return false;
-                  }
-              })
-          });
-        });
-      } catch (e) {
-      }
-      //con,clearFlag是否清空选项
-      function refreshGrid(con, clearFlag) {
-        if (!con)
-          con = "dataTable";
-        try {
-          var mfs = document.getElementsByName("mainframe");
-          if (mfs.length <= 0)
-            mfs = window.parent.document.getElementsByName("mainframe");
-          if (mfs.length > 0) {
-            $.each(mfs, function(i, mf) {
-              if (mf.contentWindow.$) {
-                var tempGrid = mf.contentWindow.$("#" + con);
-                if($.isFunction(tempGrid.datagrid)){
-                    tempGrid.datagrid('reload');
-                    if ("undefined"==typeof clearFlag || clearFlag) {
-                        tempGrid.datagrid('clearSelections');
+        top.fingerprintFlag=false;
+        top.fingerReg=false;
+            var ctx = '/zzj';
+          try {
+            $(function() {
+              doFluidLayout();
+              $("input").each(function(i){//防止回车提交表单
+                  $(this).bind("keypress",function(e){
+                      if(e.keyCode==13){
+                        return false;
+                      }
+                  })
+              });
+            });
+          } catch (e) {
+          }
+          //con,clearFlag是否清空选项
+          function refreshGrid(con, clearFlag) {
+            if (!con)
+              con = "dataTable";
+            try {
+              var mfs = document.getElementsByName("mainframe");
+              if (mfs.length <= 0)
+                mfs = window.parent.document.getElementsByName("mainframe");
+              if (mfs.length > 0) {
+                $.each(mfs, function(i, mf) {
+                  if (mf.contentWindow.$) {
+                    var tempGrid = mf.contentWindow.$("#" + con);
+                    if($.isFunction(tempGrid.datagrid)){
+                        tempGrid.datagrid('reload');
+                        if ("undefined"==typeof clearFlag || clearFlag) {
+                            tempGrid.datagrid('clearSelections');
+                        }
                     }
+                  }
+                });
+              } else {
+                $("#" + con).datagrid('reload');
+                $parent("#" + con).datagrid('reload');
+                if ("undefined"==typeof clearFlag || clearFlag) {
+                  $("#" + con).datagrid('clearSelections');
+                  $parent("#" + con).datagrid('clearSelections');
                 }
               }
-            });
-          } else {
-            $("#" + con).datagrid('reload');
-            $parent("#" + con).datagrid('reload');
-            if ("undefined"==typeof clearFlag || clearFlag) {
-              $("#" + con).datagrid('clearSelections');
-              $parent("#" + con).datagrid('clearSelections');
+            } catch (e) {
+              var tab = $('#tabs').tabs('getSelected');
+              var mfs = $("iframe", tab);
+              $.each(mfs, function(i, mf) {
+                if (mf.contentWindow.$) {
+                  mf.contentWindow.$("#" + con).datagrid('reload');
+                  if ("undefined"==typeof clearFlag || clearFlag) {
+                    mf.contentWindow.$("#" + con).datagrid('clearSelections');
+                  }
+                }
+              });
             }
-          }
-        } catch (e) {
-          var tab = $('#tabs').tabs('getSelected');
-          var mfs = $("iframe", tab);
-          $.each(mfs, function(i, mf) {
-            if (mf.contentWindow.$) {
-              mf.contentWindow.$("#" + con).datagrid('reload');
-              if ("undefined"==typeof clearFlag || clearFlag) {
-                mf.contentWindow.$("#" + con).datagrid('clearSelections');
-              }
-            }
-          });
-        }
 
-      } 
+          }
     </script>
     <!-- some css fix -->
     <!--[if gte IE 8]>
     <style type="text/css">
-    .leftmenu dd span{
-        float:none;
-    }
-    .leftmenu .title{
-        height:35px;
-    }
-    </style> 
+        .leftmenu dd span{
+            float:none;
+        }
+        .leftmenu .title{
+            height:35px;
+        }
+    </style>
     <![endif]-->
 
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -101,6 +101,8 @@
     <script>
         checkToken();
         var userToken = getCookie("userToken");
+        console.log('有无',userToken);
+        // debugger
         var userInfo;
         userInfo = JSON.parse(getCookie("userInfo"));
         var correct_count = 0;
@@ -122,7 +124,7 @@
             });
 
             $("#a2").click(function() {
-                if ($(".showQuestion").find("input[name='page']").val() == "5") {
+                if ($(".showQuestion").find("input[name='page']").val() == exam_count) {
                     alert("已经是最后一题！请点击提交！");
                     return;
                 }
@@ -136,10 +138,10 @@
                 "background": "#42d5ca",
                 "width": "200px"
             });
-            
+
         });
 
-        $(document).on("click", ".option", function(){ 
+        $(document).on("click", ".option", function(){
             var answer_val = $(this).parent().parent().parent().parent().parent().find("input[name='answer']").val();
             var data_id = $(this).parent().parent().parent().parent().parent().attr("data-id");
             if (answer_val.indexOf($(this).attr("title")) === -1) { //判断选项是否已被选中
@@ -155,7 +157,7 @@
 
         function getExamList(){
             $.ajax({
-                    url:"/zzj/user/examList",
+                    url:"http://nocm.wzmtr.com:2443/zzj/user/examList",
                     type:"GET",
                     dataType:"json",
                     beforeSend: function (request) {
@@ -166,6 +168,7 @@
                         console.log(res)
                         if(res.code == 0){
                             examList = res.data;
+                            exam_count = examList.length;
                             renderExam(examList);
                         }else{
                             console.log("error")
@@ -173,7 +176,8 @@
                     },
                     error:function () {
                        console.log("...")
-                       location.href = "/zzj/index.html";
+                    //    location.href = "/zzj/index.html";
+                       electron.loadPage('./src/index.html')
                     }
             });
         }
@@ -188,6 +192,7 @@
                 var exam_tpl =  '<div id="extam-{{examId}}" data-id="{{i}}" class="oneQuestion showQuestion">'+
                                 '        <div id="div_question" align="left">'+
                                 '            <span id="span_content">{{examText}}</span>'+
+                                '            <span id="span_content">[{{examTypeName}}]</span>'+
                                 '        </div>'+
                                 '        <div id="div_answer">'+
                                 '            <table id="table_answer" cellpadding="0" cellspacing="5">'+
@@ -207,6 +212,7 @@
                 exam_tpl = exam_tpl.replace("{{i}}",i);
                 exam_tpl = exam_tpl.replace("{{j}}",i+1);
                 exam_tpl = exam_tpl.replace("{{examText}}",n.examText);
+                exam_tpl = exam_tpl.replace("{{examTypeName}}",n.examTypeName);
                 //<tr><td class="option" id="ans_{{O}}" title="{{O}}">{{O}}：{{option}}</td></tr>
                 var option_html = "";
                 if(n.optionA != null && n.optionA != ""){
@@ -283,25 +289,26 @@
             });
         }
         function gotoIndex(){
-            location.href = "/zzj/index.html";
+            // location.href = "/zzj/index.html";
+            electron.loadPage('./src/index.html')
         }
 
 
         window.history.forward(1);
-        var saveLock = 0;
         function save() {
+            var saveLock = 0;
+            $.each(exam_answer,function(i,n){
+                if(n == ""){
+                    saveLock = 1;
+                }
+            });
+            if(saveLock == 1){
+                $parent.messager.alert('提示', '本次考试还有题目未作答！', 'info');
+                return;
+            }
             if(saveLock == 0){
-                $.each(exam_answer,function(i,n){
-                    console.log(i);
-                    console.log(n);
-                    if(n == ""){
-                        $parent.messager.alert('提示', '本次考试还有题目未作答！', 'info');
-                        saveLock = 1;
-                        return;   
-                    }
-                });
                 $.ajax({
-                        url:"/zzj/user/examSave",
+                        url:"http://nocm.wzmtr.com:2443/zzj/user/examSave",
                         type:"POST",
                         data:JSON.stringify({"examList":exam_list,"examAnswer":exam_answer,"examCorrect":exam_correct}),
                         dataType:"json",
@@ -314,17 +321,22 @@
 
                             if(res.code == 0){
                                 if( res.data.reCountError > 0 ){
-                                   //未通过
-                                    $parent.messager.confirm('考试结果', "本次考试共有"+ (res.data.reCount) +"道题，您有" + (res.data.reCountError) + "道题错误！重考一次？", function(r) {
+                                    //未通过
+                                    // $parent.messager.alert("考试结果", "本次考试共有"+ (res.data.reCount) +"道题，您有" + (res.data.reCountError) + "道题错误！");
+                                    // location.href = "/zzj/index.html";
+                                    $parent.messager.confirm('考试结果', "本次考试共有"+ (res.data.reCount) +"道题，您有" + (res.data.reCountError) + "道题错误！", function(r) {
                                             if (r) {
-                                                location.reload();
+                                                // location.href = "/zzj/index.html";
+                                                electron.loadPage('./src/index.html')
                                             }else{
-                                                location.href = "/zzj/index.html";
+                                                // location.href = "/zzj/index.html";
+                                                electron.loadPage('./src/index.html')
                                             }
                                         });
                                 } else {
                                     $parent.messager.alert("考试结果", "正确率100%,您已通过本次考试！");
-                                    location.href = "/zzj/index.html";
+                                    // location.href = "/zzj/index.html";
+                                    electron.loadPage('./src/index.html')
                                 }
                             }else{
                                 $parent.messager.alert('提示', res.message, 'info');
@@ -351,7 +363,7 @@
 </head>
 <body style="">
 <form method="post" id="answerForm">
-<div class="zzj_subpage_wrap">
+    <div class="zzj_subpage_wrap">
         <div class="top"><div class="top_left">温州市域轨道交通乘务自助终端系统</div></div>
         <div class="subpage_main">
 
@@ -386,7 +398,7 @@
                 <div><input type="text" id="count" name="count" value="" class="input_hidden"></div>
             </div>
         </div>
-</div>
+    </div>
 </form>
 
 

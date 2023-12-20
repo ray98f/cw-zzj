@@ -26,7 +26,7 @@ public interface DmUserAccountMapper {
 
     List<UserPositionResDTO> getUserPosition(Long userId);
 
-    Integer getPassRecordCount(Long userId);
+    Integer getPassRecordCount(Long userId, Integer type);
 
     List<ExamResDTO> getExamByCnf(Long typeId ,Integer rowCount);
     List<ExamResDTO> getExamList(Integer rowCount);
@@ -34,11 +34,18 @@ public interface DmUserAccountMapper {
     List<ExamConfigDetailResDTO> getExamConf(Long userId);
     Integer addRecord(ExamRecordReqDTO examRecordReqDTO);
 
-    Integer addRecordDetail(List<RecordDetailReqDTO> list,Integer reId);
+    Integer addRecordDetail(List<RecordDetailReqDTO> list,Long reId);
 
     DutyDetailResDTO getDutyInfo(Long userId);
 
-    DutyDetailResDTO getNextDutyInfo(String userId,String recDate);
+    DutyDetailResDTO getNextDutyInfo(Long userId,String recDate);
+
+    /**
+     * 获取派班人员
+     * @param classType 排班类型
+     * @return 派班人员姓名
+     */
+    String getDispatchUser(String classType);
 
     List<DmAttendQuitResDTO> getAttendQuit(Long crId);
 
@@ -46,7 +53,22 @@ public interface DmUserAccountMapper {
 
     Integer dutyOff(AttendQuitReqDTO attendQuitReqDTO);
 
+    /**
+     * 根据用户排班信息获取详细排班信息
+     * @param list 用户排班信息列表
+     * @return 排班信息
+     */
+    List<TrainScheduleDTO> getTrainSchedulesDetail(List<UserDutyReqDTO> list);
+
     List<TrainScheduleDTO> getTrainSchedules(List<String> list);
+
+    /**
+     * 判断人员在指定日期是否已派单
+     * @param date 日期
+     * @param driverId 工号
+     * @return 是否已报单 0 否 1 是
+     */
+    Integer getHadSaveOrder(String date, String driverId);
 
     Integer saveOrderInfo(OrderReqDTO orderInfo);
 

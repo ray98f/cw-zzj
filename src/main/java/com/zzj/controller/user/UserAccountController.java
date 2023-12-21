@@ -92,6 +92,40 @@ public class UserAccountController {
         return DataResponse.of(userAccountService.dutyOff(currentLoginUser,attendQuitReqDTO));
     }
 
+    /**
+     * 根据账号所属线路获取当天车次列表
+     * @param lineId 线路id
+     * @return 车次列表
+     */
+    @GetMapping("/listTrains")
+    @ApiOperation(value = "根据账号所属线路获取当天车次列表")
+    public DataResponse<List<TrainsResDTO>> listTrains(@RequestParam Long lineId) {
+        return DataResponse.of(userAccountService.listTrains(lineId));
+    }
+
+    /**
+     * 根据账号所属线路获取车站列表
+     * @param lineId 线路id
+     * @return 车站列表
+     */
+    @GetMapping("/listStations")
+    @ApiOperation(value = "根据账号所属线路获取车站列表")
+    public DataResponse<List<StationsResDTO>> listStations(@RequestParam Long lineId) {
+        return DataResponse.of(userAccountService.listStations(lineId));
+    }
+
+    /**
+     * 根据列车和站点查询列车信息
+     * @param trainId 列车id
+     * @param stationId 站点id
+     * @return 列车信息
+     */
+    @GetMapping("/getTrainSchedule")
+    @ApiOperation(value = "根据列车和站点查询列车信息")
+    public DataResponse<TrainScheduleDTO> getTrainSchedule(@RequestParam String trainId, @RequestParam String stationId) {
+        return DataResponse.of(userAccountService.getTrainSchedule(trainId, stationId));
+    }
+
     @PostMapping("/orderInit")
     @ApiOperation(value = "报单信息")
     public DataResponse<List<TrainScheduleDTO>> orderInfo(@RequestBody Map<String,String> param) {

@@ -322,6 +322,21 @@ public class UserAccountServiceImpl implements UserAccountService {
     }
 
     @Override
+    public List<TrainsResDTO> listTrains(Long lineId) {
+        return dmUserAccountMapper.listTrains(lineId);
+    }
+
+    @Override
+    public List<StationsResDTO> listStations(Long lineId) {
+        return dmUserAccountMapper.listStations(lineId);
+    }
+
+    @Override
+    public TrainScheduleDTO getTrainSchedule(String trainId, String stationId) {
+        return dmUserAccountMapper.getTrainScheduleByTrainIdAndStationId(trainId, stationId);
+    }
+
+    @Override
     public List<TrainScheduleDTO> orderInit(String stringRunList) {
         if (StringUtils.isEmpty(stringRunList)) {
             return null;

@@ -108,7 +108,7 @@
         LEFT JOIN STATIONS t7 on t7.ID = t2.ATTEND_LOCATION
         LEFT JOIN CROSSINGROADTYPE t9 on t9.ID=t2.CROSSINGROADTYPE_ID and t9.IS_DELETED=0
         WHERE trunc(t1.ARRANGE_DATE)=trunc(sysdate)  AND  t1.is_deleted=0 and t8.AUDIT_STATUS = 2
-        AND (t1.NEW_DRIVER_INFO_ID = #{userId} OR t1.ASSISTANT_DRIVER_ID = #{userId})
+        AND (t1.NEW_DRIVER_INFO_ID=#{userId} OR t1.ASSISTANT_DRIVER_ID=#{userId} OR t1.STUDENT_DRIVER_ID=#{userId})
     </select>
 
     <select id="getNextDutyInfo" resultType="com.zzj.dto.res.DutyDetailResDTO">
@@ -139,7 +139,7 @@
         LEFT JOIN STATIONS t7 on t7.ID = t2.ATTEND_LOCATION
         LEFT JOIN CROSSINGROADTYPE t9 on t9.ID=t2.CROSSINGROADTYPE_ID and t9.IS_DELETED=0
         WHERE t1.ARRANGE_DATE > to_date(#{recDate},'yyyy-mm-dd hh24:mi:ss') AND  t1.is_deleted=0 and t8.AUDIT_STATUS = 2
-        AND (t1.NEW_DRIVER_INFO_ID = #{userId} OR t1.ASSISTANT_DRIVER_ID = #{userId})
+        AND (t1.NEW_DRIVER_INFO_ID=#{userId} OR t1.ASSISTANT_DRIVER_ID=#{userId} OR t1.STUDENT_DRIVER_ID=#{userId})
         ORDER BY t1.ARRANGE_DATE ASC
         FETCH FIRST 1 ROWS ONLY
     </select>
@@ -162,6 +162,29 @@
             ACTION_TIME
         FROM NEW_DRIVER_ATTEND_QUIT
         WHERE NEW_SCHEDULING_ID = #{crId} and CLOCK_IN_USER=#{userId}
+    </select>
+
+    <select id="listTrains" resultType="com.zzj.dto.res.TrainsResDTO">
+        SELECT t1.ID, t1.TRAIN_NAME
+        FROM NEW_TRAIN_NUMBER t1
+        LEFT JOIN NEW_TIME_TABLE_ARRANGE t2 ON t2.NEW_TIME_TABLE_ID=t1.NEW_TIME_TABLE_ID AND t2.IS_DELETED=0
+        LEFT JOIN NEW_TIME_TABLE t3 ON t3.ID=t2.NEW_TIME_TABLE_ID AND t3.IS_DELETED=0
+        WHERE trunc(t2.ARRANGE_DATE)=trunc(sysdate) AND t3.LINE_ID=#{lineId} and t1.IS_DELETED=0
+    </select>
+
+    <select id="listStations" resultType="com.zzj.dto.res.StationsResDTO">
+        SELECT ID, STATION_NAME, STATION_CODE, LINE_ID
+        FROM STATIONS
+        WHERE LINE_ID=#{lineId}
+    </select>
+
+    <select id="getTrainScheduleByTrainIdAndStationId" resultType="com.zzj.dto.res.TrainScheduleDTO">
+        SELECT t1.ID,t1.NEW_TRAIN_NUMBER_ID AS TRAIN_ID,t1.CURRENT_STATIONS_ID as STATION_ID,
+        t1.IN_TIME AS arrive,t1.OUT_TIME AS depart,t2.STATION_NAME,t3.TRAIN_NAME
+        FROM NEW_TRAIN_NUMBER_STATION t1
+        LEFT JOIN STATIONS t2 on t1.CURRENT_STATIONS_ID = t2.ID
+        LEFT JOIN NEW_TRAIN_NUMBER t3 on t1.NEW_TRAIN_NUMBER_ID = t3.ID
+        where t1.NEW_TRAIN_NUMBER_ID=#{trainId} AND t1.IS_DELETED = 0 and t1.CURRENT_STATIONS_ID=#{stationId}
     </select>
 
     <select id="getTrainSchedulesDetail" resultType="com.zzj.dto.res.TrainScheduleDTO">

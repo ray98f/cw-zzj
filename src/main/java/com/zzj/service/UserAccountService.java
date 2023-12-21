@@ -33,6 +33,28 @@ public interface UserAccountService {
 
     String dutyOff(CurrentLoginUser currentLoginUser,AttendQuitReqDTO attendQuitReqDTO);
 
+    /**
+     * 根据账号所属线路获取当天车次列表
+     * @param lineId 线路id
+     * @return 车次列表
+     */
+    List<TrainsResDTO> listTrains(Long lineId);
+
+    /**
+     * 根据账号所属线路获取车站列表
+     * @param lineId 线路id
+     * @return 车站列表
+     */
+    List<StationsResDTO> listStations(Long lineId);
+
+    /**
+     * 根据列车和站点查询列车信息
+     * @param trainId 列车id
+     * @param stationId 站点id
+     * @return 列车信息
+     */
+    TrainScheduleDTO getTrainSchedule(String trainId, String stationId);
+
     List<TrainScheduleDTO> orderInit(String stringRunList);
 
     void saveOrder(OrderReqDTO orderInfo);

@@ -80,7 +80,7 @@ public interface DmUserAccountMapper {
      * @param stationId 站点id
      * @return 列车信息
      */
-    TrainScheduleDTO getTrainScheduleByTrainIdAndStationId(String trainId, String stationId);
+    TrainScheduleDTO getTrainScheduleByTrainIdAndStationId(Long trainId, Long stationId);
 
     /**
      * 根据用户排班信息获取详细排班信息

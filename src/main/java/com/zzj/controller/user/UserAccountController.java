@@ -13,6 +13,7 @@ import com.zzj.service.UserAccountService;
 import com.zzj.shiro.CurrentLoginUser;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.formula.functions.T;
@@ -122,13 +123,13 @@ public class UserAccountController {
      */
     @GetMapping("/getTrainSchedule")
     @ApiOperation(value = "根据列车和站点查询列车信息")
-    public DataResponse<TrainScheduleDTO> getTrainSchedule(@RequestParam String trainId, @RequestParam String stationId) {
+    public DataResponse<TrainScheduleDTO> getTrainSchedule(@RequestParam Long trainId, @RequestParam Long stationId) {
         return DataResponse.of(userAccountService.getTrainSchedule(trainId, stationId));
     }
 
     @PostMapping("/orderInit")
     @ApiOperation(value = "报单信息")
-    public DataResponse<List<TrainScheduleDTO>> orderInfo(@RequestBody Map<String,String> param) {
+    public DataResponse<List<TrainScheduleResDTO>> orderInfo(@RequestBody Map<String,String> param) {
         return DataResponse.of(userAccountService.orderInit(param.get("stringRunList")));
     }
 

@@ -53,9 +53,9 @@ public interface UserAccountService {
      * @param stationId 站点id
      * @return 列车信息
      */
-    TrainScheduleDTO getTrainSchedule(String trainId, String stationId);
+    TrainScheduleDTO getTrainSchedule(Long trainId, Long stationId);
 
-    List<TrainScheduleDTO> orderInit(String stringRunList);
+    List<TrainScheduleResDTO> orderInit(String stringRunList);
 
     void saveOrder(OrderReqDTO orderInfo);
 

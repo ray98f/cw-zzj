@@ -332,20 +332,58 @@ public class UserAccountServiceImpl implements UserAccountService {
     }
 
     @Override
-    public TrainScheduleDTO getTrainSchedule(String trainId, String stationId) {
+    public TrainScheduleDTO getTrainSchedule(Long trainId, Long stationId) {
         return dmUserAccountMapper.getTrainScheduleByTrainIdAndStationId(trainId, stationId);
     }
 
     @Override
-    public List<TrainScheduleDTO> orderInit(String stringRunList) {
+    public List<TrainScheduleResDTO> orderInit(String stringRunList) {
         if (StringUtils.isEmpty(stringRunList)) {
             return null;
         }
         List<UserDutyReqDTO> trains = JSONArray.parseArray(stringRunList, UserDutyReqDTO.class);
-        if (trains != null && !trains.isEmpty()) {
-            return dmUserAccountMapper.getTrainSchedulesDetail(trains);
+        if (Objects.isNull(trains) || trains.isEmpty()) {
+            return null;
         }
-        return null;
+        List<TrainScheduleDTO> list = dmUserAccountMapper.getTrainSchedulesDetail(trains);
+        List<TrainScheduleResDTO> resList = new ArrayList<>();
+        if (!Objects.isNull(list) && !list.isEmpty()) {
+            for (int i = 0; i < list.size(); i++) {
+                if ("2".equals(list.get(i).getStationType())) {
+                    continue;
+                }
+                for (int j = 0; j < list.size(); j++) {
+                    if (list.get(i).getTrainId().equals(list.get(j).getTrainId()) && "2".equals(list.get(j).getStationType())) {
+                        TrainScheduleResDTO res = getTrainScheduleRes(list, i, j);
+                        resList.add(res);
+                        break;
+                    }
+                }
+            }
+        }
+        return resList;
+    }
+
+    /**
+     * 报单数据重组
+     * @param list 原始报单数据
+     * @param i 外部循环参数
+     * @param j 内部循环参数
+     * @return TrainScheduleResDTO
+     */
+    private TrainScheduleResDTO getTrainScheduleRes(List<TrainScheduleDTO> list, int i, int j) {
+        TrainScheduleResDTO res = new TrainScheduleResDTO();
+        res.setTrainId(list.get(i).getTrainId());
+        res.setTrainName(list.get(i).getTrainName());
+        res.setStartStationId(list.get(i).getStationId());
+        res.setStartStationName(list.get(i).getStationName());
+        res.setStartArrive(list.get(i).getArrive());
+        res.setStartDepart(list.get(i).getDepart());
+        res.setEndStationId(list.get(j).getStationId());
+        res.setEndStationName(list.get(j).getStationName());
+        res.setEndArrive(list.get(j).getArrive());
+        res.setEndDepart(list.get(j).getDepart());
+        return res;
     }
 
     @Override

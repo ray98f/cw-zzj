@@ -350,6 +350,7 @@
         "alcohol_check_status",
         "alcohol_check_result",
         CLOCK_IN_USER,
+        DRIVER_ID,
         CREATE_BY
         )
         values
@@ -360,6 +361,7 @@
         #{newSchedulingId},
         #{alcoholTestStatus},
         #{alcoholResult},
+        #{userId},
         #{userId},
         #{userId}
         )
@@ -373,6 +375,7 @@
         ACTION_TIME,
         NEW_SCHEDULING_ID,
         CLOCK_IN_USER,
+        DRIVER_ID,
         CREATE_BY
         )
         values
@@ -381,6 +384,7 @@
         #{workType},
         to_date(#{actionTime},'yyyy-mm-dd hh24:mi:ss'),
         #{newSchedulingId},
+        #{userId},
         #{userId},
         #{userId}
         )

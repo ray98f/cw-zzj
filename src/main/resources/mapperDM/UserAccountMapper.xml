@@ -93,8 +93,9 @@
         t2.QUIT_TIME as offtime,
         t2.START_RUN_CROSSINGROAD ,
         t2.NEW_CROSSINGROAD_TABLE_ID as tableinfo_id,
-        t2.KILOMETRES as miles,
-        t2.MAN_HOUR as whours,
+        (case when t2.KILOMETRES is null then '0' else t2.KILOMETRES end) as miles,
+        (case when t2.MAN_HOUR is null then '0' else t2.MAN_HOUR end) as whours,
+        t4.ID AS table_id,
         t4.TIME_TABLE_NAME AS table_name,
         t5.id AS line_id,
         t5.linename AS line_name，
@@ -138,7 +139,7 @@
         LEFT JOIN LINE t5 ON t5.ID  = t4.LINE_ID
         LEFT JOIN STATIONS t7 on t7.ID = t2.ATTEND_LOCATION
         LEFT JOIN CROSSINGROADTYPE t9 on t9.ID=t2.CROSSINGROADTYPE_ID and t9.IS_DELETED=0
-        WHERE t1.ARRANGE_DATE > to_date(#{recDate},'yyyy-mm-dd hh24:mi:ss') AND  t1.is_deleted=0 and t8.AUDIT_STATUS = 2
+        WHERE trunc(t1.ARRANGE_DATE)=trunc(sysdate + #{i}) AND  t1.is_deleted=0 and t8.AUDIT_STATUS = 2
         AND (t1.NEW_DRIVER_INFO_ID=#{userId} OR t1.ASSISTANT_DRIVER_ID=#{userId} OR t1.STUDENT_DRIVER_ID=#{userId})
         ORDER BY t1.ARRANGE_DATE ASC
         FETCH FIRST 1 ROWS ONLY
@@ -152,7 +153,7 @@
         LEFT JOIN CROSSINGROADTYPE t3 on t3.ID=t2.CROSSINGROADTYPE_ID and t3.IS_DELETED=0
         LEFT JOIN IAM_USER t4 ON t1.NEW_DRIVER_INFO_ID = t4.ID and t4.IS_DELETED=0
         WHERE t1.CLASS_TYPE=#{classType} and t3.CRT_NAME LIKE '%司机长%' AND t1.is_deleted=0 AND t8.AUDIT_STATUS=2
-        and trunc(t1.ARRANGE_DATE)=trunc(sysdate)
+        and trunc(t1.ARRANGE_DATE)=trunc(sysdate) and rownum=1
     </select>
 
     <select id="getAttendQuit" resultType="com.zzj.dto.res.DmAttendQuitResDTO">
@@ -424,7 +425,10 @@
         <if test="date!=null and date!=''">
             "TIME",
         </if>
-        <if test="userViewName!=null and userViewName!=''">
+        <if test="lineType!=null">
+            LINE_TYPE,
+        </if>
+        <if test="userId!=null">
             name,
         </if>
         <if test="driverId!=null and driverId!=''">
@@ -442,16 +446,23 @@
         <if test="workHour!=null">
             work_hours,
         </if>
-        <if test="schedule!=null">
-            schedule,
+        <if test="tableId!=null">
+            SCHEDULE,
         </if>
+        <if test="schedule!=null">
+            SCHEDULING_ID,
+        </if>
+
         create_by,create_time)
         values (#{id},
         <if test="date!=null and date!=''">
             to_date(#{date},'yyyy-mm-dd hh24:mi:ss'),
         </if>
-        <if test="userViewName!=null and userViewName!=''">
-            #{userViewName},
+        <if test="lineType!=null">
+            #{lineType},
+        </if>
+        <if test="userId!=null and userId!=''">
+            #{userId},
         </if>
         <if test="driverId!=null and driverId!=''">
             #{driverId},
@@ -467,6 +478,9 @@
         </if>
         <if test="workHour!=null">
             #{workHour},
+        </if>
+        <if test="tableId!=null">
+            #{tableId},
         </if>
         <if test="schedule!=null">
             #{schedule},

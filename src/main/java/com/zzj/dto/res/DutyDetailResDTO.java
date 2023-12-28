@@ -61,7 +61,7 @@ public class DutyDetailResDTO {
     private String startRunCrossingroad;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private Long tableinfoId;
+    private Long tableId;
 
     private String tableName;
 
@@ -126,5 +126,11 @@ public class DutyDetailResDTO {
      * 排班人员
      */
     private String dispatchUser;
+
+    /**
+     * 始发车次
+     */
+    private String firstTrain;
+
 
 }

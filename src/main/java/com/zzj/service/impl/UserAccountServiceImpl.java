@@ -239,9 +239,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         }
         if (!Objects.isNull(dutyInfo.getCrName())) {
             if (Arrays.stream(DUTY_REST).anyMatch(rest -> dutyInfo.getCrName().equals(rest))) {
-                dutyInfo.setIsWork(1);
-            } else {
-                dutyInfo.setIsWork(0);
+                throw new CommonException(ErrorCode.DUTY_REST);
             }
         }
         if (!Objects.isNull(dutyInfo.getCrossingRoadTypeName())) {
@@ -250,6 +248,10 @@ public class UserAccountServiceImpl implements UserAccountService {
             } else {
                 dutyInfo.setIsSpecialType(1);
             }
+        }
+        List<UserDutyReqDTO> trains = JSONArray.parseArray(dutyInfo.getStartRunCrossingroad(), UserDutyReqDTO.class);
+        if (!Objects.isNull(trains) && !trains.isEmpty()) {
+            dutyInfo.setFirstTrain(trains.get(0).getTrainName());
         }
         dutyInfo.setDispatchUser(dmUserAccountMapper.getDispatchUser(dutyInfo.getClassType()));
         dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
@@ -270,18 +272,25 @@ public class UserAccountServiceImpl implements UserAccountService {
     }
 
     @Override
-    public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser, String recDate) {
+    public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser) {
+        int i = 1;
         try {
-            DutyDetailResDTO dutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), recDate);
+            DutyDetailResDTO dutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
             if (!Objects.isNull(dutyInfo)) {
+                while (!Objects.isNull(dutyInfo.getCrName())) {
+                    DutyDetailResDTO finalDutyInfo = dutyInfo;
+                    if (Arrays.stream(DUTY_REST).anyMatch(rest -> finalDutyInfo.getCrName().equals(rest))) {
+                        i++;
+                        dutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
+                    } else {
+                        break;
+                    }
+                }
                 dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
                 dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
-                if (!Objects.isNull(dutyInfo.getCrName())) {
-                    if (Arrays.stream(DUTY_REST).anyMatch(rest -> dutyInfo.getCrName().contains(rest))) {
-                        dutyInfo.setIsNextWork(1);
-                    } else {
-                        dutyInfo.setIsNextWork(0);
-                    }
+                List<UserDutyReqDTO> trains = JSONArray.parseArray(dutyInfo.getStartRunCrossingroad(), UserDutyReqDTO.class);
+                if (!Objects.isNull(trains) && !trains.isEmpty()) {
+                    dutyInfo.setFirstTrain(trains.get(0).getTrainName());
                 }
             }
             return dutyInfo;
@@ -395,6 +404,9 @@ public class UserAccountServiceImpl implements UserAccountService {
         }
         try {
             orderInfo.setId(snowflakeGenerator.next());
+            if (!Objects.isNull(orderInfo.getOffTime()) && !orderInfo.getOffTime().isEmpty()) {
+                orderInfo.setOffTime(new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + " " + orderInfo.getOffTime());
+            }
             res = dmUserAccountMapper.saveOrderInfo(orderInfo);
             boolean orderInfoEmpty = orderInfo.getList() != null && !orderInfo.getList().isEmpty();
             if (res > 0 && orderInfoEmpty) {

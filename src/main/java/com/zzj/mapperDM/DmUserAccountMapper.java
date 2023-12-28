@@ -39,7 +39,7 @@ public interface DmUserAccountMapper {
 
     DutyDetailResDTO getDutyInfo(Long userId);
 
-    DutyDetailResDTO getNextDutyInfo(Long userId,String recDate);
+    DutyDetailResDTO getNextDutyInfo(Long userId, int i);
 
     /**
      * 获取派班人员

@@ -67,9 +67,9 @@ public class UserAccountController {
 
     @PostMapping("/nextDuty")
     @ApiOperation(value = "获取下一次排班信息")
-    public DataResponse<DutyDetailResDTO> nextDuty(@CurrUser CurrentLoginUser currentLoginUser,@RequestBody Map<String,String> param) {
+    public DataResponse<DutyDetailResDTO> nextDuty(@CurrUser CurrentLoginUser currentLoginUser) {
 
-        return DataResponse.of(userAccountService.getNextDutyInfo(currentLoginUser,param.get("recDate")));
+        return DataResponse.of(userAccountService.getNextDutyInfo(currentLoginUser));
     }
 
     @PostMapping("/dutyOn")

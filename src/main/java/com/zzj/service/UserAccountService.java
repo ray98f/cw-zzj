@@ -27,7 +27,7 @@ public interface UserAccountService {
     ExamRecordReqDTO saveExam(CurrentLoginUser currentLoginUser, Map<String,List<String>> paraMap);
 
     DutyDetailResDTO getDutyInfo(CurrentLoginUser currentLoginUser);
-    DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser,String recDate);
+    DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser);
 
     String dutyOn(CurrentLoginUser currentLoginUser,AttendQuitReqDTO attendQuitReqDTO);
 

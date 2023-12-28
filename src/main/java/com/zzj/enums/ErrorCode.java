@@ -161,7 +161,12 @@ public enum ErrorCode {
     /**
      * 排班信息不存在
      */
-    DUTY_INFO_NOT_EXIST(3200106, "duty.info.not.exist");
+    DUTY_INFO_NOT_EXIST(3200106, "duty.info.not.exist"),
+
+    /**
+     * 休班
+     */
+    DUTY_REST(3200107, "duty.rest");
 
 
 

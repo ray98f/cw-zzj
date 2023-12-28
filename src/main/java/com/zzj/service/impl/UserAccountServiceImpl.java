@@ -327,8 +327,8 @@ public class UserAccountServiceImpl implements UserAccountService {
     }
 
     @Override
-    public List<StationsResDTO> listStations(Long lineId) {
-        return dmUserAccountMapper.listStations(lineId);
+    public List<StationsResDTO> listStations(Long lineId, Long trainId) {
+        return dmUserAccountMapper.listStations(lineId, trainId);
     }
 
     @Override

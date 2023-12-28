@@ -107,12 +107,13 @@ public class UserAccountController {
     /**
      * 根据账号所属线路获取车站列表
      * @param lineId 线路id
+     * @param trainId 车辆id
      * @return 车站列表
      */
     @GetMapping("/listStations")
     @ApiOperation(value = "根据账号所属线路获取车站列表")
-    public DataResponse<List<StationsResDTO>> listStations(@RequestParam Long lineId) {
-        return DataResponse.of(userAccountService.listStations(lineId));
+    public DataResponse<List<StationsResDTO>> listStations(@RequestParam Long lineId, @RequestParam Long trainId) {
+        return DataResponse.of(userAccountService.listStations(lineId, trainId));
     }
 
     /**

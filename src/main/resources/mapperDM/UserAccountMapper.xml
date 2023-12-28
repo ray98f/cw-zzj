@@ -174,9 +174,11 @@
     </select>
 
     <select id="listStations" resultType="com.zzj.dto.res.StationsResDTO">
-        SELECT ID, STATION_NAME, STATION_CODE, LINE_ID
-        FROM STATIONS
-        WHERE LINE_ID=#{lineId}
+        select t2.ID, t2.STATION_NAME, t2.STATION_CODE, t2.LINE_ID
+        from NEW_TRAIN_NUMBER_STATION t1
+        LEFT JOIN STATIONS t2 on t1.CURRENT_STATIONS_ID = t2.ID
+        where t2.LINE_ID=#{lineId} and t1.NEW_TRAIN_NUMBER_ID=#{trainId}
+        order by t2.ID ASC
     </select>
 
     <select id="getTrainScheduleByTrainIdAndStationId" resultType="com.zzj.dto.res.TrainScheduleDTO">

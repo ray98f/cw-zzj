@@ -43,9 +43,10 @@ public interface UserAccountService {
     /**
      * 根据账号所属线路获取车站列表
      * @param lineId 线路id
+     * @param trainId 车辆id
      * @return 车站列表
      */
-    List<StationsResDTO> listStations(Long lineId);
+    List<StationsResDTO> listStations(Long lineId, Long trainId);
 
     /**
      * 根据列车和站点查询列车信息

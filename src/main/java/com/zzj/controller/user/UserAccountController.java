@@ -13,6 +13,7 @@ import com.zzj.service.UserAccountService;
 import com.zzj.shiro.CurrentLoginUser;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.formula.functions.T;
@@ -66,9 +67,9 @@ public class UserAccountController {
 
     @PostMapping("/nextDuty")
     @ApiOperation(value = "获取下一次排班信息")
-    public DataResponse<DutyDetailResDTO> nextDuty(@CurrUser CurrentLoginUser currentLoginUser,@RequestBody Map<String,String> param) {
+    public DataResponse<DutyDetailResDTO> nextDuty(@CurrUser CurrentLoginUser currentLoginUser) {
 
-        return DataResponse.of(userAccountService.getNextDutyInfo(currentLoginUser,param.get("recDate")));
+        return DataResponse.of(userAccountService.getNextDutyInfo(currentLoginUser));
     }
 
     @PostMapping("/dutyOn")
@@ -92,9 +93,43 @@ public class UserAccountController {
         return DataResponse.of(userAccountService.dutyOff(currentLoginUser,attendQuitReqDTO));
     }
 
+    /**
+     * 根据账号所属线路获取当天车次列表
+     * @param lineId 线路id
+     * @return 车次列表
+     */
+    @GetMapping("/listTrains")
+    @ApiOperation(value = "根据账号所属线路获取当天车次列表")
+    public DataResponse<List<TrainsResDTO>> listTrains(@RequestParam Long lineId) {
+        return DataResponse.of(userAccountService.listTrains(lineId));
+    }
+
+    /**
+     * 根据账号所属线路获取车站列表
+     * @param lineId 线路id
+     * @return 车站列表
+     */
+    @GetMapping("/listStations")
+    @ApiOperation(value = "根据账号所属线路获取车站列表")
+    public DataResponse<List<StationsResDTO>> listStations(@RequestParam Long lineId) {
+        return DataResponse.of(userAccountService.listStations(lineId));
+    }
+
+    /**
+     * 根据列车和站点查询列车信息
+     * @param trainId 列车id
+     * @param stationId 站点id
+     * @return 列车信息
+     */
+    @GetMapping("/getTrainSchedule")
+    @ApiOperation(value = "根据列车和站点查询列车信息")
+    public DataResponse<TrainScheduleDTO> getTrainSchedule(@RequestParam Long trainId, @RequestParam Long stationId) {
+        return DataResponse.of(userAccountService.getTrainSchedule(trainId, stationId));
+    }
+
     @PostMapping("/orderInit")
     @ApiOperation(value = "报单信息")
-    public DataResponse<List<TrainScheduleDTO>> orderInfo(@RequestBody Map<String,String> param) {
+    public DataResponse<List<TrainScheduleResDTO>> orderInfo(@RequestBody Map<String,String> param) {
         return DataResponse.of(userAccountService.orderInit(param.get("stringRunList")));
     }
 

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.SqlParser;
 import com.zzj.dto.req.*;
 import com.zzj.dto.res.*;
 import io.swagger.models.auth.In;
+import jdk.nashorn.internal.parser.Token;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
 
@@ -38,7 +39,7 @@ public interface DmUserAccountMapper {
 
     DutyDetailResDTO getDutyInfo(Long userId);
 
-    DutyDetailResDTO getNextDutyInfo(Long userId,String recDate);
+    DutyDetailResDTO getNextDutyInfo(Long userId, int i);
 
     /**
      * 获取派班人员
@@ -47,11 +48,39 @@ public interface DmUserAccountMapper {
      */
     String getDispatchUser(String classType);
 
-    List<DmAttendQuitResDTO> getAttendQuit(Long crId);
+    /**
+     * 获取出退勤情况
+     * @param crId 排班id
+     * @param userId 用户id
+     * @return
+     */
+    List<DmAttendQuitResDTO> getAttendQuit(Long crId, Long userId);
 
     Integer dutyOn(AttendQuitReqDTO attendQuitReqDTO);
 
     Integer dutyOff(AttendQuitReqDTO attendQuitReqDTO);
+
+    /**
+     * 根据账号所属线路获取当天车次列表
+     * @param lineId 线路id
+     * @return 车次列表
+     */
+    List<TrainsResDTO> listTrains(Long lineId);
+
+    /**
+     * 根据账号所属线路获取车站列表
+     * @param lineId 线路id
+     * @return 车站列表
+     */
+    List<StationsResDTO> listStations(Long lineId);
+
+    /**
+     * 根据列车和站点查询列车信息
+     * @param trainId 列车id
+     * @param stationId 站点id
+     * @return 列车信息
+     */
+    TrainScheduleDTO getTrainScheduleByTrainIdAndStationId(Long trainId, Long stationId);
 
     /**
      * 根据用户排班信息获取详细排班信息

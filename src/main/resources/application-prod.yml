@@ -74,28 +74,14 @@ spring:
         maximum-pool-size: 30
         minimum-idle: 10
 
-  #redis
-  redis:
-    database: 11
-    cluster:
-      nodes: 10.11.70.202:2051, 10.11.70.202:2052, 10.11.70.202:2053, 10.11.70.203:2051, 10.11.70.203:2052, 10.11.70.203:2053
-    jedis:
-      pool:
-        max-active: 50
-        min-idle: 0
-        max-idle: 50
-        max-wait: -1
-    key-prefix: dev-
-#    key-prefix: test-
-
 mybatis-plus:
   mapper-locations: classpath:/mapper/*.xml
   type-aliases-package: com.zzj.sms.entity
   configuration:
     multiple-result-sets-enabled: true
-    #    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.log4j2.Log4j2Impl
+#    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
   global-config:
     sql-parser-cache: true
     db-config:

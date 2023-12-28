@@ -99,15 +99,15 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     private String MDM_USER_CARD_URL = "http://esb.wzmtr.com:7003/mdmwebservice/ps/getAllCardList?wsdl";
 
-    private final String[] DUTY_REST = new String[] {"孕","年","产","病","疗","事","育","独","丧","婚","护","调","休"};
+    private final String[] DUTY_REST = new String[]{"孕", "年", "产", "病", "疗", "事", "育", "独", "丧", "婚", "护", "调", "休", "不出"};
 
-    private final String[] CROSSING_ROAD_TYPE = new String[] {"指导司机", "司机长", "调车"};
+    private final String[] CROSSING_ROAD_TYPE = new String[]{"指导司机", "司机长", "调车"};
 
     @Override
     public String getUser(UserLoginReqDTO userLoginReqDTO, HttpServletRequest request) {
         SystemUserResDTO user = null;
         String loginType = "";
-        switch (userLoginReqDTO.getLoginType()){
+        switch (userLoginReqDTO.getLoginType()) {
             case CommonConstants.LOGIN_TYPE_NORMAL:
                 user = loginByPwd(userLoginReqDTO);
                 loginType = "ZZJ_PWD";
@@ -127,16 +127,17 @@ public class UserAccountServiceImpl implements UserAccountService {
             throw new CommonException(ErrorCode.USER_OR_PWD_ERROR);
         }
         insertLoginLog(user, userLoginReqDTO, loginType, request);
-        CurrentLoginUser currentLoginUser = new CurrentLoginUser(user.getUserId(),user.getUserName(),user.getUserViewName(),user.getIamUserId());
+        CurrentLoginUser currentLoginUser = new CurrentLoginUser(user.getUserId(), user.getUserName(), user.getUserViewName(), user.getIamUserId());
         return TokenUtil.createSimpleToken(currentLoginUser);
     }
 
     /**
      * 登录日志录入
-     * @param user 用户信息
+     *
+     * @param user            用户信息
      * @param userLoginReqDTO 用户登录信息
-     * @param loginType 登录类型
-     * @param request 请求体
+     * @param loginType       登录类型
+     * @param request         请求体
      */
     private void insertLoginLog(SystemUserResDTO user, UserLoginReqDTO userLoginReqDTO, String loginType, HttpServletRequest request) {
         String loginJson = JSONObject.toJSONString(userLoginReqDTO);
@@ -161,7 +162,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         user.setDutyDetail(getDutyInfo(currentLoginUser));
         List<UserPositionResDTO> positionList = dmUserAccountMapper.getUserPosition(currentLoginUser.getUserId());
         StringBuilder positionStr = new StringBuilder(",");
-        for (UserPositionResDTO position : positionList){
+        for (UserPositionResDTO position : positionList) {
             positionStr.append(position.getPositionName()).append(",");
         }
         user.setPositionNameStr(positionStr.toString());
@@ -169,7 +170,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         // 查询当日三交三问的记录
         Integer recordCount = dmUserAccountMapper.getPassRecordCount(currentLoginUser.getUserId(), null);
-        if (recordCount > 0) {
+        if (recordCount > 0 || user.getDutyDetail().getAttendFlag() == 1) {
             user.setThreeCheck(1);
         } else {
             user.setThreeCheck(0);
@@ -194,7 +195,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ExamRecordReqDTO saveExam(CurrentLoginUser currentLoginUser,Map<String, List<String>> paraMap) {
+    public ExamRecordReqDTO saveExam(CurrentLoginUser currentLoginUser, Map<String, List<String>> paraMap) {
         Object[] examList = paraMap.get("examList").toArray();
         Object[] examAnswer = paraMap.get("examAnswer").toArray();
         Object[] examCorrect = paraMap.get("examCorrect").toArray();
@@ -237,10 +238,8 @@ public class UserAccountServiceImpl implements UserAccountService {
             throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
         }
         if (!Objects.isNull(dutyInfo.getCrName())) {
-            if (Arrays.stream(DUTY_REST).anyMatch(rest -> dutyInfo.getCrName().contains(rest))) {
-                dutyInfo.setIsWork(1);
-            } else {
-                dutyInfo.setIsWork(0);
+            if (Arrays.stream(DUTY_REST).anyMatch(rest -> dutyInfo.getCrName().equals(rest))) {
+                throw new CommonException(ErrorCode.DUTY_REST);
             }
         }
         if (!Objects.isNull(dutyInfo.getCrossingRoadTypeName())) {
@@ -250,10 +249,14 @@ public class UserAccountServiceImpl implements UserAccountService {
                 dutyInfo.setIsSpecialType(1);
             }
         }
+        List<UserDutyReqDTO> trains = JSONArray.parseArray(dutyInfo.getStartRunCrossingroad(), UserDutyReqDTO.class);
+        if (!Objects.isNull(trains) && !trains.isEmpty()) {
+            dutyInfo.setFirstTrain(trains.get(0).getTrainName());
+        }
         dutyInfo.setDispatchUser(dmUserAccountMapper.getDispatchUser(dutyInfo.getClassType()));
         dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
         dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
-        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId());
+        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId(), currentLoginUser.getUserId());
         if (workList.isEmpty()) {
             dutyInfo.setAttendFlag(0);
             dutyInfo.setQuitFlag(0);
@@ -269,28 +272,35 @@ public class UserAccountServiceImpl implements UserAccountService {
     }
 
     @Override
-    public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser, String recDate) {
-        try{
-            DutyDetailResDTO dutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(),recDate);
-            if(!Objects.isNull(dutyInfo)){
+    public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser) {
+        int i = 1;
+        try {
+            DutyDetailResDTO dutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
+            if (!Objects.isNull(dutyInfo)) {
+                while (!Objects.isNull(dutyInfo.getCrName())) {
+                    DutyDetailResDTO finalDutyInfo = dutyInfo;
+                    if (Arrays.stream(DUTY_REST).anyMatch(rest -> finalDutyInfo.getCrName().equals(rest))) {
+                        i++;
+                        dutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
+                    } else {
+                        break;
+                    }
+                }
                 dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
                 dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
-                if (!Objects.isNull(dutyInfo.getCrName())) {
-                    if (Arrays.stream(DUTY_REST).anyMatch(rest -> dutyInfo.getCrName().contains(rest))) {
-                        dutyInfo.setIsNextWork(1);
-                    } else {
-                        dutyInfo.setIsNextWork(0);
-                    }
+                List<UserDutyReqDTO> trains = JSONArray.parseArray(dutyInfo.getStartRunCrossingroad(), UserDutyReqDTO.class);
+                if (!Objects.isNull(trains) && !trains.isEmpty()) {
+                    dutyInfo.setFirstTrain(trains.get(0).getTrainName());
                 }
             }
             return dutyInfo;
-        }catch (Exception e) {
+        } catch (Exception e) {
             throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
         }
     }
 
     @Override
-    public String dutyOn(CurrentLoginUser currentLoginUser,AttendQuitReqDTO attendQuitReqDTO) {
+    public String dutyOn(CurrentLoginUser currentLoginUser, AttendQuitReqDTO attendQuitReqDTO) {
 
         SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:m:s");
         String attendTime = sdf.format(new Date());
@@ -299,14 +309,14 @@ public class UserAccountServiceImpl implements UserAccountService {
         attendQuitReqDTO.setUserId(currentLoginUser.getUserId());
         attendQuitReqDTO.setActionTime(attendTime);
         Integer res = dmUserAccountMapper.dutyOn(attendQuitReqDTO);
-        if(res > 0){
+        if (res > 0) {
             return attendTime;
         }
         return "";
     }
 
     @Override
-    public String dutyOff(CurrentLoginUser currentLoginUser,AttendQuitReqDTO attendQuitReqDTO) {
+    public String dutyOff(CurrentLoginUser currentLoginUser, AttendQuitReqDTO attendQuitReqDTO) {
         SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:m:s");
         String quitTime = sdf.format(new Date());
         attendQuitReqDTO.setId(snowflakeGenerator.next());
@@ -314,22 +324,75 @@ public class UserAccountServiceImpl implements UserAccountService {
         attendQuitReqDTO.setActionTime(quitTime);
         attendQuitReqDTO.setUserId(currentLoginUser.getUserId());
         Integer res = dmUserAccountMapper.dutyOff(attendQuitReqDTO);
-        if(res > 0){
+        if (res > 0) {
             return quitTime;
         }
         return "";
     }
 
     @Override
-    public List<TrainScheduleDTO> orderInit(String stringRunList) {
-        if(StringUtils.isEmpty(stringRunList)){
+    public List<TrainsResDTO> listTrains(Long lineId) {
+        return dmUserAccountMapper.listTrains(lineId);
+    }
+
+    @Override
+    public List<StationsResDTO> listStations(Long lineId) {
+        return dmUserAccountMapper.listStations(lineId);
+    }
+
+    @Override
+    public TrainScheduleDTO getTrainSchedule(Long trainId, Long stationId) {
+        return dmUserAccountMapper.getTrainScheduleByTrainIdAndStationId(trainId, stationId);
+    }
+
+    @Override
+    public List<TrainScheduleResDTO> orderInit(String stringRunList) {
+        if (StringUtils.isEmpty(stringRunList)) {
             return null;
         }
         List<UserDutyReqDTO> trains = JSONArray.parseArray(stringRunList, UserDutyReqDTO.class);
-        if (trains != null && !trains.isEmpty()) {
-            return dmUserAccountMapper.getTrainSchedulesDetail(trains);
+        if (Objects.isNull(trains) || trains.isEmpty()) {
+            return null;
         }
-        return null;
+        List<TrainScheduleDTO> list = dmUserAccountMapper.getTrainSchedulesDetail(trains);
+        List<TrainScheduleResDTO> resList = new ArrayList<>();
+        if (!Objects.isNull(list) && !list.isEmpty()) {
+            for (int i = 0; i < list.size(); i++) {
+                if ("2".equals(list.get(i).getStationType())) {
+                    continue;
+                }
+                for (int j = 0; j < list.size(); j++) {
+                    if (list.get(i).getTrainId().equals(list.get(j).getTrainId()) && "2".equals(list.get(j).getStationType())) {
+                        TrainScheduleResDTO res = getTrainScheduleRes(list, i, j);
+                        resList.add(res);
+                        break;
+                    }
+                }
+            }
+        }
+        return resList;
+    }
+
+    /**
+     * 报单数据重组
+     * @param list 原始报单数据
+     * @param i 外部循环参数
+     * @param j 内部循环参数
+     * @return TrainScheduleResDTO
+     */
+    private TrainScheduleResDTO getTrainScheduleRes(List<TrainScheduleDTO> list, int i, int j) {
+        TrainScheduleResDTO res = new TrainScheduleResDTO();
+        res.setTrainId(list.get(i).getTrainId());
+        res.setTrainName(list.get(i).getTrainName());
+        res.setStartStationId(list.get(i).getStationId());
+        res.setStartStationName(list.get(i).getStationName());
+        res.setStartArrive(list.get(i).getArrive());
+        res.setStartDepart(list.get(i).getDepart());
+        res.setEndStationId(list.get(j).getStationId());
+        res.setEndStationName(list.get(j).getStationName());
+        res.setEndArrive(list.get(j).getArrive());
+        res.setEndDepart(list.get(j).getDepart());
+        return res;
     }
 
     @Override
@@ -341,6 +404,9 @@ public class UserAccountServiceImpl implements UserAccountService {
         }
         try {
             orderInfo.setId(snowflakeGenerator.next());
+            if (!Objects.isNull(orderInfo.getOffTime()) && !orderInfo.getOffTime().isEmpty()) {
+                orderInfo.setOffTime(new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + " " + orderInfo.getOffTime());
+            }
             res = dmUserAccountMapper.saveOrderInfo(orderInfo);
             boolean orderInfoEmpty = orderInfo.getList() != null && !orderInfo.getList().isEmpty();
             if (res > 0 && orderInfoEmpty) {
@@ -371,16 +437,16 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     @Transactional
-    public Integer faceRegister(CurrentLoginUser currentLoginUse,List<HashMap<String, Object>> list) {
+    public Integer faceRegister(CurrentLoginUser currentLoginUse, List<HashMap<String, Object>> list) {
         List<String> faceList = new ArrayList<>();
-        for(HashMap<String, Object> map: list){
-            faceList.add(map.get("feature")+"");
+        for (HashMap<String, Object> map : list) {
+            faceList.add(map.get("feature") + "");
         }
-        try{
-            dmUserAccountMapper.addUserFace(currentLoginUse.getPersonId(),faceList);
+        try {
+            dmUserAccountMapper.addUserFace(currentLoginUse.getPersonId(), faceList);
             Integer res = dmUserAccountMapper.updateFace(currentLoginUse.getPersonId());
             return res;
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new CommonException(ErrorCode.INSERT_ERROR);
         }
     }
@@ -391,23 +457,23 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         Long id = Long.parseLong(map.get("id").toString());
 
-        CheckDutyResDTO dutyInfo = dmUserAccountMapper.checkDutyInfo(currentLoginUser.getUserId(),id);
+        CheckDutyResDTO dutyInfo = dmUserAccountMapper.checkDutyInfo(currentLoginUser.getUserId(), id);
         res.setCheckDutyInfo(dutyInfo);
-        if(dutyInfo != null && StrUtil.contains(dutyInfo.getCrName(),CommonConstants.DUTY_OFF_CR_NAME_CHECK)){
+        if (dutyInfo != null && StrUtil.contains(dutyInfo.getCrName(), CommonConstants.DUTY_OFF_CR_NAME_CHECK)) {
             List<UserKeyStoreRecordResDTO> list = dmUserAccountMapper.getKeyRecord(dutyInfo);
-            if(list == null || list.size() == 0){
+            if (list == null || list.size() == 0) {
 
                 //TODO 调用钥匙柜接口查询本日归还记录
                 String accessToken = getKeyBoxAuth();
-                List<RecordData> recList = getKeyBoxRecord(dutyInfo,accessToken);
-                if(recList != null && recList.size() > 0){
+                List<RecordData> recList = getKeyBoxRecord(dutyInfo, accessToken);
+                if (recList != null && recList.size() > 0) {
                     res.setCheckRes(1); //晚班  有归还记录
                     RecordData rec = recList.get(0);
 
                     //柜子编号,钥匙编号 格子
                     String boxNum = rec.getBoxNumber().toString();
                     String keyNum = String.format("%03d", rec.getKeyNumber());
-                    KeyCabinetResDTO keyInfo = dmUserAccountMapper.getKeyCabinetInfo(boxNum,keyNum);
+                    KeyCabinetResDTO keyInfo = dmUserAccountMapper.getKeyCabinetInfo(boxNum, keyNum);
 
                     UserKeyStoreRecordResDTO userKeyStoreRecord = new UserKeyStoreRecordResDTO();
                     SnowFlakeIdUtils snowFlakeIdUtils = new SnowFlakeIdUtils();
@@ -422,31 +488,31 @@ public class UserAccountServiceImpl implements UserAccountService {
 
                     res.setUserKeyStoreRecordRes(userKeyStoreRecord);
 
-                }else {
+                } else {
                     res.setCheckRes(0); //晚班 未归还钥匙
                 }
 
                 return res;
-            }else{
+            } else {
                 res.setCheckRes(1);//晚班 有存放记录 可归还
                 res.setUserKeyStoreRecordRes(list.get(0)); //记录信息
                 return res;
             }
-        }else{
+        } else {
             res.setCheckRes(3);//非晚班不检测钥匙存放
             return res;
         }
 
     }
 
-    private SystemUserResDTO loginByPwd(UserLoginReqDTO userLoginReqDTO){
+    private SystemUserResDTO loginByPwd(UserLoginReqDTO userLoginReqDTO) {
         SystemUserResDTO user = eipUserAccountMapper.getUserByName(userLoginReqDTO.getUsername());
         if (StringUtils.isEmpty(userLoginReqDTO.getUsername()) || StringUtils.isEmpty(userLoginReqDTO.getPassword())
                 || Objects.isNull(user)) {
             return null;
         }
-        String userPwd = CrytogramUtil.encrypt(CrytogramUtil.decrypt64(userLoginReqDTO.getPassword()).toString(),"MD5")+"";
-        if(!userPwd.equals(user.getUserPassword())){
+        String userPwd = CrytogramUtil.encrypt(CrytogramUtil.decrypt64(userLoginReqDTO.getPassword()).toString(), "MD5") + "";
+        if (!userPwd.equals(user.getUserPassword())) {
             return null;
         }
         IamUserResDTO iamUser = dmUserAccountMapper.getUserByName(userLoginReqDTO.getUsername());
@@ -455,50 +521,50 @@ public class UserAccountServiceImpl implements UserAccountService {
     }
 
 
-    private SystemUserResDTO loginByCard(UserLoginReqDTO userLoginReqDTO){
+    private SystemUserResDTO loginByCard(UserLoginReqDTO userLoginReqDTO) {
         //TODO 根据物理卡号 获取员工信息  从数据共享平台申请调用 员工卡信息接口  目前还没有 20231124
         //query api userNo
         String uuid = userLoginReqDTO.getCardNo();
         log.info("=====登录卡号 before uuid：" + uuid);
         uuid = cardChange(uuid);
         log.info("=====登录卡号 after uuid：" + uuid);
-        try{
+        try {
             SysUserCardResDTO user1 = dmUserAccountMapper.getUserByCard(uuid);
             SystemUserResDTO user = eipUserAccountMapper.getUserByName(user1.getUserNo());
             IamUserResDTO iamUser = dmUserAccountMapper.getUserByName(user1.getUserNo());
             user.setIamUserId(iamUser.getId());
             return user;
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
         }
 
     }
 
-    private SystemUserResDTO loginByFace(UserLoginReqDTO userLoginReqDTO){
-        try{
+    private SystemUserResDTO loginByFace(UserLoginReqDTO userLoginReqDTO) {
+        try {
             SystemUserResDTO user = eipUserAccountMapper.getUserByName(userLoginReqDTO.getUsername());
             IamUserResDTO iamUser = dmUserAccountMapper.getUserByName(userLoginReqDTO.getUsername());
             user.setIamUserId(iamUser.getId());
             return user;
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
         }
     }
 
-    private String timeChange(String timeNum){
-        String timeStr = String.format("%06d",Integer.parseInt(timeNum));
+    private String timeChange(String timeNum) {
+        String timeStr = String.format("%06d", Integer.parseInt(timeNum));
         String newTimeStr = "";
-        if(timeStr.length() == 6){
-            newTimeStr += timeStr.substring(0,2) + ":";
-            newTimeStr += timeStr.substring(2,4) + ":";
-            newTimeStr += timeStr.substring(4,6);
+        if (timeStr.length() == 6) {
+            newTimeStr += timeStr.substring(0, 2) + ":";
+            newTimeStr += timeStr.substring(2, 4) + ":";
+            newTimeStr += timeStr.substring(4, 6);
         }
         return newTimeStr;
     }
 
-    private String getKeyBoxAuth(){
+    private String getKeyBoxAuth() {
         String accessToken = "";
-        String url = keyBoxAuthUrl + "?name=" + keyBoxUserName+"&Psw=" + keyBoxUserPwd;
+        String url = keyBoxAuthUrl + "?name=" + keyBoxUserName + "&Psw=" + keyBoxUserPwd;
         UriComponents uriComponents = UriComponentsBuilder.fromUriString(url)
                 .build()
                 .expand()
@@ -506,17 +572,17 @@ public class UserAccountServiceImpl implements UserAccountService {
         URI uri = uriComponents.toUri();
         JSONObject res = restTemplate.getForEntity(uri, JSONObject.class).getBody();
 
-        if(CommonConstants.KEY_BOX_RES_CODE.equals(Objects.requireNonNull(res).getInteger(CommonConstants.KEY_BOX_RESULT_CODE))){
+        if (CommonConstants.KEY_BOX_RES_CODE.equals(Objects.requireNonNull(res).getInteger(CommonConstants.KEY_BOX_RESULT_CODE))) {
             JSONObject data = res.getJSONObject(CommonConstants.KEY_BOX_RESULT_DATA);
             accessToken = data.getString(CommonConstants.KEY_BOX_TOKEN);
         }
         return accessToken;
     }
 
-    private List<RecordData> getKeyBoxRecord(CheckDutyResDTO dutyInfo,String accessToken){
+    private List<RecordData> getKeyBoxRecord(CheckDutyResDTO dutyInfo, String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.valueOf("application/json;UTF-8"));
-        headers.add("Authorization","Bearer " + accessToken);
+        headers.add("Authorization", "Bearer " + accessToken);
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date currentTime = new Date();
@@ -535,29 +601,29 @@ public class UserAccountServiceImpl implements UserAccountService {
         HttpEntity<String> strEntity = new HttpEntity<>(JSONObject.toJSONString(inRecord), headers);
         JSONObject json = restTemplate.postForEntity(keyBoxRecordUrl, strEntity, JSONObject.class).getBody();
 
-        if(!CommonConstants.KEY_BOX_RES_CODE.equals(Objects.requireNonNull(json).getString(CommonConstants.KEY_BOX_RESULT_CODE))){
+        if (!CommonConstants.KEY_BOX_RES_CODE.equals(Objects.requireNonNull(json).getString(CommonConstants.KEY_BOX_RESULT_CODE))) {
             return null;
         }
 
         if (json.getJSONArray(CommonConstants.KEY_BOX_RECORD_DATA) != null) {
             return JSONArray.parseArray(json.getJSONArray(CommonConstants.KEY_BOX_RECORD_DATA).toJSONString(), RecordData.class);
-        }else{
+        } else {
             inRecord.setUserNumber(dutyInfo.getAssistantDriverNo()); //  查询 副控司机
             HttpEntity<String> strEntity2 = new HttpEntity<>(JSONObject.toJSONString(inRecord), headers);
             JSONObject json2 = restTemplate.postForEntity(keyBoxRecordUrl, strEntity2, JSONObject.class).getBody();
-            if(!CommonConstants.KEY_BOX_RES_CODE.equals(Objects.requireNonNull(json2).getString(CommonConstants.KEY_BOX_RESULT_CODE))){
+            if (!CommonConstants.KEY_BOX_RES_CODE.equals(Objects.requireNonNull(json2).getString(CommonConstants.KEY_BOX_RESULT_CODE))) {
                 return null;
-            }else{
+            } else {
                 return JSONArray.parseArray(json2.getJSONArray(CommonConstants.KEY_BOX_RECORD_DATA).toJSONString(), RecordData.class);
             }
         }
     }
 
-    public String cardChange(String cardUuid){
+    public String cardChange(String cardUuid) {
         //20 101C0FBF 000820   16
-        String excludeHead = (cardUuid.substring(2,cardUuid.length()));
-        String atqaSakStr = (cardUuid.substring(cardUuid.length()-6));
-        return excludeHead.replace(atqaSakStr,"");
+        String excludeHead = (cardUuid.substring(2, cardUuid.length()));
+        String atqaSakStr = (cardUuid.substring(cardUuid.length() - 6));
+        return excludeHead.replace(atqaSakStr, "");
     }
 
 }

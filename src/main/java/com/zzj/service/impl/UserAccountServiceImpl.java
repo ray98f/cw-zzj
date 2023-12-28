@@ -99,7 +99,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     private String MDM_USER_CARD_URL = "http://esb.wzmtr.com:7003/mdmwebservice/ps/getAllCardList?wsdl";
 
-    private final String[] DUTY_REST = new String[]{"孕", "年", "产", "病", "疗", "事", "育", "独", "丧", "婚", "护", "调", "休", "不出"};
+    private final String[] DUTY_REST = new String[]{"孕", "年", "产", "病", "疗", "事", "育", "独", "丧", "婚", "护", "调", "休"};
 
     private final String[] CROSSING_ROAD_TYPE = new String[]{"指导司机", "司机长", "调车"};
 

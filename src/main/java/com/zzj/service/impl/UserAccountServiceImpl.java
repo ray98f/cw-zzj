@@ -80,9 +80,6 @@ public class UserAccountServiceImpl implements UserAccountService {
     private SnowflakeGenerator snowflakeGenerator;
 
     @Autowired
-    private UserAccountMapper userAccountMapper;
-
-    @Autowired
     private EipUserAccountMapper eipUserAccountMapper;
 
     @Autowired
@@ -93,11 +90,6 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Autowired
     private RestTemplate restTemplate;
-
-    @Resource(name = "zzj2SqlSessionFactory")
-    private SqlSessionFactory zzj2SqlSessionFactory;
-
-    private String MDM_USER_CARD_URL = "http://esb.wzmtr.com:7003/mdmwebservice/ps/getAllCardList?wsdl";
 
     private final String[] DUTY_REST = new String[]{"孕", "年", "产", "病", "疗", "事", "育", "独", "丧", "婚", "护", "调", "休"};
 
@@ -301,8 +293,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     public String dutyOn(CurrentLoginUser currentLoginUser, AttendQuitReqDTO attendQuitReqDTO) {
-
-        SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:m:s");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:m:s");
         String attendTime = sdf.format(new Date());
         attendQuitReqDTO.setId(snowflakeGenerator.next());
         attendQuitReqDTO.setWorkType("1");
@@ -317,7 +308,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     public String dutyOff(CurrentLoginUser currentLoginUser, AttendQuitReqDTO attendQuitReqDTO) {
-        SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:m:s");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:m:s");
         String quitTime = sdf.format(new Date());
         attendQuitReqDTO.setId(snowflakeGenerator.next());
         attendQuitReqDTO.setWorkType("2");
@@ -444,8 +435,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         }
         try {
             dmUserAccountMapper.addUserFace(currentLoginUse.getPersonId(), faceList);
-            Integer res = dmUserAccountMapper.updateFace(currentLoginUse.getPersonId());
-            return res;
+            return dmUserAccountMapper.updateFace(currentLoginUse.getPersonId());
         } catch (Exception e) {
             throw new CommonException(ErrorCode.INSERT_ERROR);
         }
@@ -461,12 +451,12 @@ public class UserAccountServiceImpl implements UserAccountService {
         res.setCheckDutyInfo(dutyInfo);
         if (dutyInfo != null && StrUtil.contains(dutyInfo.getCrName(), CommonConstants.DUTY_OFF_CR_NAME_CHECK)) {
             List<UserKeyStoreRecordResDTO> list = dmUserAccountMapper.getKeyRecord(dutyInfo);
-            if (list == null || list.size() == 0) {
+            if (list == null || list.isEmpty()) {
 
                 //TODO 调用钥匙柜接口查询本日归还记录
                 String accessToken = getKeyBoxAuth();
                 List<RecordData> recList = getKeyBoxRecord(dutyInfo, accessToken);
-                if (recList != null && recList.size() > 0) {
+                if (recList != null && !recList.isEmpty()) {
                     res.setCheckRes(1); //晚班  有归还记录
                     RecordData rec = recList.get(0);
 
@@ -507,13 +497,12 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     private SystemUserResDTO loginByPwd(UserLoginReqDTO userLoginReqDTO) {
         SystemUserResDTO user = eipUserAccountMapper.getUserByName(userLoginReqDTO.getUsername());
-        if (StringUtils.isEmpty(userLoginReqDTO.getUsername()) || StringUtils.isEmpty(userLoginReqDTO.getPassword())
-                || Objects.isNull(user)) {
-            return null;
+        if (StringUtils.isEmpty(userLoginReqDTO.getUsername()) || StringUtils.isEmpty(userLoginReqDTO.getPassword()) || Objects.isNull(user)) {
+            throw new CommonException(ErrorCode.USER_OR_PWD_ERROR);
         }
-        String userPwd = CrytogramUtil.encrypt(CrytogramUtil.decrypt64(userLoginReqDTO.getPassword()).toString(), "MD5") + "";
+        String userPwd = CrytogramUtil.encrypt(CrytogramUtil.decrypt64(userLoginReqDTO.getPassword()), "MD5");
         if (!userPwd.equals(user.getUserPassword())) {
-            return null;
+            throw new CommonException(ErrorCode.USER_OR_PWD_ERROR);
         }
         IamUserResDTO iamUser = dmUserAccountMapper.getUserByName(userLoginReqDTO.getUsername());
         user.setIamUserId(iamUser.getId());
@@ -522,33 +511,29 @@ public class UserAccountServiceImpl implements UserAccountService {
 
 
     private SystemUserResDTO loginByCard(UserLoginReqDTO userLoginReqDTO) {
-        //TODO 根据物理卡号 获取员工信息  从数据共享平台申请调用 员工卡信息接口  目前还没有 20231124
-        //query api userNo
         String uuid = userLoginReqDTO.getCardNo();
         log.info("=====登录卡号 before uuid：" + uuid);
         uuid = cardChange(uuid);
         log.info("=====登录卡号 after uuid：" + uuid);
+        SysUserCardResDTO cardUser = dmUserAccountMapper.getUserByCard(uuid);
+        if (Objects.isNull(cardUser)) {
+            throw new CommonException(ErrorCode.CARD_USER_ERROR);
+        }
         try {
-            SysUserCardResDTO user1 = dmUserAccountMapper.getUserByCard(uuid);
-            SystemUserResDTO user = eipUserAccountMapper.getUserByName(user1.getUserNo());
-            IamUserResDTO iamUser = dmUserAccountMapper.getUserByName(user1.getUserNo());
+            SystemUserResDTO user = eipUserAccountMapper.getUserByName(cardUser.getUserNo());
+            IamUserResDTO iamUser = dmUserAccountMapper.getUserByName(cardUser.getUserNo());
             user.setIamUserId(iamUser.getId());
             return user;
         } catch (Exception e) {
-            throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
+            throw new CommonException(ErrorCode.CARD_ERROR);
         }
-
     }
 
     private SystemUserResDTO loginByFace(UserLoginReqDTO userLoginReqDTO) {
-        try {
-            SystemUserResDTO user = eipUserAccountMapper.getUserByName(userLoginReqDTO.getUsername());
-            IamUserResDTO iamUser = dmUserAccountMapper.getUserByName(userLoginReqDTO.getUsername());
-            user.setIamUserId(iamUser.getId());
-            return user;
-        } catch (Exception e) {
-            throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
-        }
+        SystemUserResDTO user = eipUserAccountMapper.getUserByName(userLoginReqDTO.getUsername());
+        IamUserResDTO iamUser = dmUserAccountMapper.getUserByName(userLoginReqDTO.getUsername());
+        user.setIamUserId(iamUser.getId());
+        return user;
     }
 
     private String timeChange(String timeNum) {

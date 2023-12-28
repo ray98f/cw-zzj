@@ -153,6 +153,9 @@ public enum ErrorCode {
     SUPPID_NOT_SAME(3200101, "suppid.should.not.same"),
     USER_OR_PWD_ERROR(3200102, "user.or.pwd.error"),
 
+    CARD_USER_ERROR(3200103, "card.user.error"),
+    CARD_ERROR(3200104, "card.error"),
+
     /**
      * 用户信息不存在
      */

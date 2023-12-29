@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zzj.mapperDM.DmUserAccountMapper">
+
+    <select id="getUserByName" resultType="com.zzj.dto.res.IamUserResDTO">
+        select ID,USER_NUM
+        from IAM_USER where USER_NUM = #{userName}
+    </select>
+
+    <select id="getUserByCard" resultType="com.zzj.dto.res.SysUserCardResDTO">
+        select
+        USER_NO,
+        CARD_UUID
+        from SYS_USER_CARD where CARD_UUID like  '%' || #{uuid}
+    </select>
+
+    <select id="getUserDetail" resultType="com.zzj.dto.res.UserAccountDetailResDTO">
+        select
+        t2.ID as user_id,
+        t2.FACE_FLAG,
+        t2.USER_NUM as user_name,
+        t2.REALNAME as user_view_name,
+        t5.GROUP_NAME as team_name，
+        t1.LINE_ID,
+        t6.LINENAME as line_name
+        from IAM_USER t2
+        left join S_USER_EXTEND t1 on t2.USER_NUM = t1.USERID
+        left join DRIVER_GROUP t5 on t5.ID = t1.DRIVERTEAM
+        left join LINE t6 on t6.ID  = t1.LINE_ID
+        where t2.USER_NUM = #{userNo}
+    </select>
+
+    <select id="getUserPosition" resultType="com.zzj.dto.res.UserPositionResDTO">
+        SELECT
+        t1.id AS positionId,t1.name AS positionName,t1.CODE AS positionCode
+        FROM IAM_POSITION t1
+        LEFT JOIN IAM_USER_POSITION t2 ON t2.POSITION_ID = t1.ID
+        WHERE t2.USER_ID  = #{userId} AND t2.IS_DELETED =0
+    </select>
+
+    <select id="getExamConfig" resultType="com.zzj.dto.res.UserPositionResDTO">
+        SELECT
+        t1.id AS positionId,t1.name AS positionName,t1.CODE AS positionCode
+        FROM IAM_POSITION t1
+        LEFT JOIN IAM_USER_POSITION t2 ON t2.POSITION_ID = t1.ID
+        WHERE t2.USER_ID  = #{userId} AND t2.IS_DELETED =0
+    </select>
+
+    <select id="getPassRecordCount" resultType="java.lang.Integer">
+        SELECT
+        COUNT(1)
+        FROM RECORD r
+        WHERE trunc(RE_DATE)=trunc(sysdate) AND RE_USER_ID = #{userId}
+        <if test="type!=null">
+            AND RE_PERCENT= 1
+        </if>
+    </select>
+
+    <select id="getExamList" resultType="com.zzj.dto.res.ExamResDTO">
+        select e.*,et.EXAMTYPE_NAME AS EXAM_TYPE_NAME from (select
+        exam_id,exam_text,option_a,option_b,option_c,option_d,option_e,option_f,answer_correct,EXAM_TYPE
+        from exam sample(10)
+        where #{rowCount}>rownum) e
+        left join EXAMTYPE et on e.EXAM_TYPE=et.EXAMTYPE_ID
+    </select>
+
+    <select id="getExamByCnf" resultType="com.zzj.dto.res.ExamResDTO">
+        select e.*,et.EXAMTYPE_NAME AS EXAM_TYPE_NAME from (select
+        exam_id,exam_text,option_a,option_b,option_c,option_d,option_e,option_f,answer_correct,EXAM_TYPE
+        from exam sample(10)
+        where #{rowCount}>rownum and EXAM_TYPE=#{typeId}) e
+        left join EXAMTYPE et on e.EXAM_TYPE=et.EXAMTYPE_ID
+    </select>
+
+    <select id="getExamConf" resultType="com.zzj.dto.res.ExamConfigDetailResDTO">
+        SELECT t1.EXAMNUM ,t1.EXAMTYPE_ID  FROM
+        EXAMCONFIGURELIST t1
+        LEFT JOIN EXAMCONFIGURE t2 ON t1.EXAMCONFIGURE_ID = t2.ID
+        WHERE t2.ROLE_ID IN (SELECT position_id FROM IAM_USER_POSITION t3 WHERE t3.USER_ID= #{userId})
+    </select>
+
+
+    <select id="getDutyInfo" resultType="com.zzj.dto.res.DutyDetailResDTO">
+        SELECT
+        t1.ID,
+        t1.CLASS_TYPE,
+        t1.NEW_CROSSINGROAD_ID as crId,
+        t2.CROSSINGROAD_NAME as crName,
+        t2.CROSSINGROADTYPE_ID as CROSSING_ROAD_TYPE_ID,
+        t9.CRT_NAME as CROSSING_ROAD_TYPE_NAME,
+        t1.ARRANGE_DATE as recDate,
+        t2.ATTEND_TIME as attentime,
+        t2.QUIT_TIME as offtime,
+        t2.START_RUN_CROSSINGROAD ,
+        t2.NEW_CROSSINGROAD_TABLE_ID as tableinfo_id,
+        (case when t2.KILOMETRES is null then '0' else t2.KILOMETRES end) as miles,
+        (case when t2.MAN_HOUR is null then '0' else t2.MAN_HOUR end) as whours,
+        t4.ID AS table_id,
+        t4.TIME_TABLE_NAME AS table_name,
+        t5.id AS line_id,
+        t5.linename AS line_name，
+        t7.STATION_NAME as attenplace
+        FROM NEW_SCHEDULING t1
+        LEFT JOIN NEW_CROSSINGROAD t2 ON t1.NEW_CROSSINGROAD_ID = t2.ID
+        LEFT JOIN NEW_CLASS_TABLE t8 on t1.NEW_CLASS_TABLE_ID = t8.ID
+        LEFT JOIN NEW_CROSSINGROAD_TABLE t3 ON t2.NEW_CROSSINGROAD_TABLE_ID = t3.ID
+        LEFT JOIN NEW_TIME_TABLE t4 ON t4.ID = t3.NEW_TIME_TABLE_ID
+        LEFT JOIN LINE t5 ON t5.ID  = t4.LINE_ID
+        LEFT JOIN STATIONS t7 on t7.ID = t2.ATTEND_LOCATION
+        LEFT JOIN CROSSINGROADTYPE t9 on t9.ID=t2.CROSSINGROADTYPE_ID and t9.IS_DELETED=0
+        WHERE trunc(t1.ARRANGE_DATE)=trunc(sysdate)  AND  t1.is_deleted=0 and t8.AUDIT_STATUS = 2
+        AND (t1.NEW_DRIVER_INFO_ID=#{userId} OR t1.ASSISTANT_DRIVER_ID=#{userId} OR t1.STUDENT_DRIVER_ID=#{userId})
+    </select>
+
+    <select id="getNextDutyInfo" resultType="com.zzj.dto.res.DutyDetailResDTO">
+        SELECT
+        t1.ID,
+        t1.CLASS_TYPE,
+        t1.NEW_CROSSINGROAD_ID as crId,
+        t2.CROSSINGROAD_NAME as crName,
+        t2.CROSSINGROADTYPE_ID as CROSSING_ROAD_TYPE_ID,
+        t9.CRT_NAME as CROSSING_ROAD_TYPE_NAME,
+        t1.ARRANGE_DATE as recDate,
+        t2.ATTEND_TIME as attentime,
+        t2.QUIT_TIME as offtime,
+        t2.START_RUN_CROSSINGROAD ,
+        t2.NEW_CROSSINGROAD_TABLE_ID as tableinfo_id,
+        t2.KILOMETRES as miles,
+        t2.MAN_HOUR as whours,
+        t4.TIME_TABLE_NAME AS table_name,
+        t5.id AS line_id,
+        t5.linename AS line_name,
+        t7.STATION_NAME as attenplace
+        FROM NEW_SCHEDULING t1
+        LEFT JOIN NEW_CROSSINGROAD t2 ON t1.NEW_CROSSINGROAD_ID = t2.ID
+        LEFT JOIN NEW_CLASS_TABLE t8 on t1.NEW_CLASS_TABLE_ID = t8.ID
+        LEFT JOIN NEW_CROSSINGROAD_TABLE t3 ON t2.NEW_CROSSINGROAD_TABLE_ID = t3.ID
+        LEFT JOIN NEW_TIME_TABLE t4 ON t4.ID = t3.NEW_TIME_TABLE_ID
+        LEFT JOIN LINE t5 ON t5.ID  = t4.LINE_ID
+        LEFT JOIN STATIONS t7 on t7.ID = t2.ATTEND_LOCATION
+        LEFT JOIN CROSSINGROADTYPE t9 on t9.ID=t2.CROSSINGROADTYPE_ID and t9.IS_DELETED=0
+        WHERE trunc(t1.ARRANGE_DATE)=trunc(sysdate + #{i}) AND  t1.is_deleted=0 and t8.AUDIT_STATUS = 2
+        AND (t1.NEW_DRIVER_INFO_ID=#{userId} OR t1.ASSISTANT_DRIVER_ID=#{userId} OR t1.STUDENT_DRIVER_ID=#{userId})
+        ORDER BY t1.ARRANGE_DATE ASC
+        FETCH FIRST 1 ROWS ONLY
+    </select>
+
+    <select id="getDispatchUser" resultType="java.lang.String">
+        SELECT t4.REALNAME
+        FROM NEW_SCHEDULING t1
+        LEFT JOIN NEW_CROSSINGROAD t2 ON t1.NEW_CROSSINGROAD_ID = t2.ID
+        LEFT JOIN NEW_CLASS_TABLE t8 on t1.NEW_CLASS_TABLE_ID = t8.ID
+        LEFT JOIN CROSSINGROADTYPE t3 on t3.ID=t2.CROSSINGROADTYPE_ID and t3.IS_DELETED=0
+        LEFT JOIN IAM_USER t4 ON t1.NEW_DRIVER_INFO_ID = t4.ID and t4.IS_DELETED=0
+        WHERE t1.CLASS_TYPE=#{classType} and t3.CRT_NAME LIKE '%司机长%' AND t1.is_deleted=0 AND t8.AUDIT_STATUS=2
+        and trunc(t1.ARRANGE_DATE)=trunc(sysdate) and rownum=1
+    </select>
+
+    <select id="getAttendQuit" resultType="com.zzj.dto.res.DmAttendQuitResDTO">
+        SELECT
+            ID,
+            WORK_TYPE,
+            ACTION_TIME
+        FROM NEW_DRIVER_ATTEND_QUIT
+        WHERE NEW_SCHEDULING_ID = #{crId} and CLOCK_IN_USER=#{userId}
+    </select>
+
+    <select id="listTrains" resultType="com.zzj.dto.res.TrainsResDTO">
+        SELECT t1.ID, t1.TRAIN_NAME
+        FROM NEW_TRAIN_NUMBER t1
+        LEFT JOIN NEW_TIME_TABLE_ARRANGE t2 ON t2.NEW_TIME_TABLE_ID=t1.NEW_TIME_TABLE_ID AND t2.IS_DELETED=0
+        LEFT JOIN NEW_TIME_TABLE t3 ON t3.ID=t2.NEW_TIME_TABLE_ID AND t3.IS_DELETED=0
+        WHERE trunc(t2.ARRANGE_DATE)=trunc(sysdate) AND t3.LINE_ID=#{lineId} and t1.IS_DELETED=0
+    </select>
+
+    <select id="listStations" resultType="com.zzj.dto.res.StationsResDTO">
+        select t2.ID, t2.STATION_NAME, t2.STATION_CODE, t2.LINE_ID
+        from NEW_TRAIN_NUMBER_STATION t1
+        LEFT JOIN STATIONS t2 on t1.CURRENT_STATIONS_ID = t2.ID
+        where t2.LINE_ID=#{lineId} and t1.NEW_TRAIN_NUMBER_ID=#{trainId}
+        order by t2.ID ASC
+    </select>
+
+    <select id="getTrainScheduleByTrainIdAndStationId" resultType="com.zzj.dto.res.TrainScheduleDTO">
+        SELECT t1.ID,t1.NEW_TRAIN_NUMBER_ID AS TRAIN_ID,t1.CURRENT_STATIONS_ID as STATION_ID,
+        t1.IN_TIME AS arrive,t1.OUT_TIME AS depart,t2.STATION_NAME,t3.TRAIN_NAME
+        FROM NEW_TRAIN_NUMBER_STATION t1
+        LEFT JOIN STATIONS t2 on t1.CURRENT_STATIONS_ID = t2.ID
+        LEFT JOIN NEW_TRAIN_NUMBER t3 on t1.NEW_TRAIN_NUMBER_ID = t3.ID
+        where t1.NEW_TRAIN_NUMBER_ID=#{trainId} AND t1.IS_DELETED = 0 and t1.CURRENT_STATIONS_ID=#{stationId}
+    </select>
+
+    <select id="getTrainSchedulesDetail" resultType="com.zzj.dto.res.TrainScheduleDTO">
+        <foreach collection="list" index="index" item="req" separator=" UNION ">
+            select t.* from
+            (select t1.ID,t1.NEW_TRAIN_NUMBER_ID AS TRAIN_ID,t1.CURRENT_STATIONS_ID as STATION_ID,t1.IN_TIME AS arrive,
+            t1.OUT_TIME AS depart,t2.STATION_NAME,t3.TRAIN_NAME,1 AS station_type
+            from NEW_TRAIN_NUMBER_STATION t1
+            LEFT JOIN STATIONS t2 on t1.CURRENT_STATIONS_ID = t2.ID
+            LEFT JOIN NEW_TRAIN_NUMBER t3 on t1.NEW_TRAIN_NUMBER_ID = t3.ID
+            where t1.NEW_TRAIN_NUMBER_ID=#{req.train} AND t1.IS_DELETED = 0 and t1.CURRENT_STATIONS_ID=#{req.stationStart}
+            UNION
+            select t1.ID,t1.NEW_TRAIN_NUMBER_ID AS TRAIN_ID,t1.CURRENT_STATIONS_ID as STATION_ID,t1.IN_TIME AS arrive,
+            t1.OUT_TIME AS depart,t2.STATION_NAME,t3.TRAIN_NAME,2 AS station_type
+            from NEW_TRAIN_NUMBER_STATION t1
+            LEFT JOIN STATIONS t2 on t1.CURRENT_STATIONS_ID = t2.ID
+            LEFT JOIN NEW_TRAIN_NUMBER t3 on t1.NEW_TRAIN_NUMBER_ID = t3.ID
+            where t1.NEW_TRAIN_NUMBER_ID=#{req.train} AND t1.IS_DELETED = 0 and t1.CURRENT_STATIONS_ID=#{req.stationEnd}) t
+        </foreach>
+    </select>
+
+    <select id="getTrainSchedules" resultType="com.zzj.dto.res.TrainScheduleDTO">
+        select t.ID,t.NEW_TRAIN_NUMBER_ID AS TRAIN_ID,t.CURRENT_STATIONS_ID as STATION_ID, t.STATION_NAME,t.IN_TIME AS arrive,t.OUT_TIME AS depart,t.station_type,t3.TRAIN_NAME
+        from(
+        select t1.ID,t1.NEW_TRAIN_NUMBER_ID,t1.CURRENT_STATIONS_ID,t2.STATION_NAME ,t1.IN_TIME,t1.OUT_TIME,1 AS  station_type
+        from (select s.*,
+        row_number() over(partition by s.NEW_TRAIN_NUMBER_ID order by s.IN_TIME ASC) p
+        from NEW_TRAIN_NUMBER_STATION s WHERE s.NEW_TRAIN_NUMBER_ID IN
+        <foreach collection="list" item="trainId" index="index" open="(" separator="," close=")">
+            #{trainId}
+        </foreach>
+        AND s.IS_DELETED = 0) t1
+        LEFT JOIN STATIONS t2 on t1.CURRENT_STATIONS_ID = t2.ID
+        where p &lt; 2
+        UNION
+        select t1.ID,t1.NEW_TRAIN_NUMBER_ID,t1.CURRENT_STATIONS_ID,t2.STATION_NAME ,t1.IN_TIME,t1.OUT_TIME,2 AS  station_type
+        from (select s.*,
+        row_number() over(partition by s.NEW_TRAIN_NUMBER_ID order by s.IN_TIME DESC) p
+        from NEW_TRAIN_NUMBER_STATION s WHERE s.NEW_TRAIN_NUMBER_ID IN
+        <foreach collection="list" item="trainId" index="index" open="(" separator="," close=")">
+            #{trainId}
+        </foreach>
+        AND s.IS_DELETED = 0) t1
+        LEFT JOIN STATIONS t2 on t1.CURRENT_STATIONS_ID = t2.ID
+        where p &lt; 2
+        ) t
+        LEFT JOIN NEW_TRAIN_NUMBER t3 on t.NEW_TRAIN_NUMBER_ID = t3.ID
+    </select>
+
+    <select id="getTrainStation" resultType="com.zzj.dto.res.TrainStationResDTO">
+        select t1.ID as train_id,t1.TRAIN_NAME as train_num,t2.CURRENT_STATIONS_ID as station_id,t3.STATION_NAME
+        from NEW_TRAIN_NUMBER t1
+        left join NEW_TRAIN_NUMBER_STATION t2 on t1.ID =t2.NEW_TRAIN_NUMBER_ID
+        left join STATIONS t3 on t2.CURRENT_STATIONS_ID  = t3.ID
+        where t2.CURRENT_STATIONS_ID is not null and t1.TRAIN_NAME = #{trainNum}
+        ORDER by t1.id ,t2.OUT_TIME asc
+    </select>
+<!--    <update id="dutyOff">-->
+<!--        update CW_BACKGROUND_RECORD set-->
+<!--        BACKGROUNDTIME = to_date(#{quitTime},'yyyy-mm-dd hh24:mi:ss'),-->
+<!--        BACKGROUNDUSER = #{backgrounduser}-->
+<!--        where USER_ID = #{userId} and CRUSERDELID = #{cruserdelid}-->
+<!--    </update>-->
+
+    <select id="featureList" resultType="com.zzj.dto.res.UserFaceFeatureResDTO">
+        SELECT * FROM SYS_USER_FACE
+    </select>
+
+    <select id="checkDutyInfo" resultType="com.zzj.dto.res.CheckDutyResDTO">
+        SELECT
+            t1.ID,
+            t1.NEW_CROSSINGROAD_ID as crId,
+            t1.NEW_CROSSINGROAD_NAME as crName,
+            t1.ARRANGE_DATE as recDate,
+            t1.NEW_DRIVER_INFO_ID,
+            t1.ASSISTANT_DRIVER_ID,
+            t2.USER_NUM AS NEW_DRIVER_NO,
+            t3.USER_NUM AS ASSISTANT_DRIVER_NO
+        FROM NEW_SCHEDULING t1
+        LEFT JOIN IAM_USER t2 ON t1.NEW_DRIVER_INFO_ID = t2.ID
+        LEFT JOIN IAM_USER t3 ON t1.ASSISTANT_DRIVER_ID  = t3.ID
+        WHERE trunc(t1.ARRANGE_DATE)=trunc(sysdate)  AND  t1.ID = #{ID}
+        AND (t1.NEW_DRIVER_INFO_ID = #{userId} OR t1.ASSISTANT_DRIVER_ID = #{userId})
+    </select>
+
+    <select id="checkDutyInfo" resultType="com.zzj.dto.res.UserKeyStoreRecordResDTO">
+        SELECT * FROM KEY_CABINET_LATTICE_RECORD WHERE IS_DELETED = 0 AND ( USER_ID = #{newDriverInfoId} OR USER_ID = #{assistantDriverId})
+        AND TO_CHAR(USE_TIME,'YYYY-MM-DD') = TO_CHAR(SYSDATE,'YYYY-MM-DD')
+    </select>
+
+    <!--
+        @ApiModelProperty(value = "ID")
+    private Long id;
+
+    @ApiModelProperty(value = "名字")
+    private Long latticeId;
+
+    @ApiModelProperty(value = "用户ID")
+    private Long userId;
+
+    @ApiModelProperty(value = "存储时间")
+    private Date useTime;
+
+    @ApiModelProperty(value = "排班ID")
+    private Long schedulingId;
+
+    @ApiModelProperty(value = "交路ID")
+    private Long crossingId;
+
+    @ApiModelProperty(value = "钥匙ID")
+    private Long cabinetId;
+    -->
+    <select id="getKeyRecord" resultType="com.zzj.dto.res.UserKeyStoreRecordResDTO">
+        SELECT t1.ID,t1.LATTICE_ID,t1.USER_ID,t1.USE_TIME,t1.scheduling_Id,t1.crossing_Id,t1.cabinet_Id,t2.KEY_CABINET_CODE,t3.LATTICE_CODE
+        from KEY_CABINET_LATTICE_RECORD t1
+        left join KEY_CABINET_INFORMATION t2 on t1.cabinet_Id = t2.id
+        left join KEY_CABINET_LATTICE t3 on t1.LATTICE_ID = t3.id
+        where (t1.USER_ID = #{newDriverInfoId} or t1.USER_ID = #{assistantDriverId}) and
+        t1.USE_TIME BETWEEN sysdate-interval '1' hour AND SYSDATE
+    </select>
+
+    <select id="getKeyCabinetInfo" resultType="com.zzj.dto.res.UserKeyStoreRecordResDTO">
+        SELECT  t2.ID AS KEY_ID,
+                t2.CABINET_ID AS BoxId,
+                t2.LATTICE_CODE,
+                t2.LATTICE_NAME,
+                t2.LATTICE_STATUS,
+                t1.KEY_CABINET_CODE,
+                t1.KEY_CABINET_NAME
+        FROM KEY_CABINET_LATTICE t2
+        LEFT JOIN KEY_CABINET_INFORMATION t1 ON t2.CABINET_ID  = t1.ID
+        WHERE t2.LATTICE_CODE  = #{boxNum} AND t1.KEY_CABINET_CODE = #{boxNum}
+    </select>
+
+
+    <insert id="dutyOn" parameterType="com.zzj.dto.req.AttendQuitReqDTO">
+        <!--insert into CW_BACKGROUND_RECORD
+        (
+            ID,
+            USER_ID,
+            CRUSERDELID,
+            ATTENDANCETIME,
+            RECDATE,
+            ATTENTUSER,
+            ALCOHOLTEST,
+            BLOODPRESSURE
+        )
+        values
+        (sys_guid(),
+         #{userId},
+        #{cruserdelid},
+        to_date(#{attendTime},'yyyy-mm-dd hh24:mi:ss'),
+        to_date(#{recDate},'yyyy-mm-dd hh24:mi:ss'),
+        #{attentuser},
+        #{alcoholtest},
+        0)-->
+        insert into NEW_DRIVER_ATTEND_QUIT
+        (
+        ID,
+        WORK_TYPE,
+        ACTION_TIME,
+        NEW_SCHEDULING_ID,
+        "alcohol_check_status",
+        "alcohol_check_result",
+        CLOCK_IN_USER,
+        DRIVER_ID,
+        CREATE_BY
+        )
+        values
+        (
+        #{id},
+        #{workType},
+        to_date(#{actionTime},'yyyy-mm-dd hh24:mi:ss'),
+        #{newSchedulingId},
+        #{alcoholTestStatus},
+        #{alcoholResult},
+        #{userId},
+        #{userId},
+        #{userId}
+        )
+    </insert>
+
+    <insert id="dutyOff" parameterType="com.zzj.dto.req.AttendQuitReqDTO">
+        insert into NEW_DRIVER_ATTEND_QUIT
+        (
+        ID,
+        WORK_TYPE,
+        ACTION_TIME,
+        NEW_SCHEDULING_ID,
+        CLOCK_IN_USER,
+        DRIVER_ID,
+        CREATE_BY
+        )
+        values
+        (
+        #{id},
+        #{workType},
+        to_date(#{actionTime},'yyyy-mm-dd hh24:mi:ss'),
+        #{newSchedulingId},
+        #{userId},
+        #{userId},
+        #{userId}
+        )
+    </insert>
+
+    <insert id="addRecord" parameterType="com.zzj.dto.req.ExamRecordReqDTO">
+        insert into RECORD
+        (re_id,re_user_id,re_type,re_date,re_percent,re_count,re_count_error)
+        values (#{reId},#{userId},1,sysdate,#{rePercent},#{reCount},#{reCountError})
+    </insert>
+
+    <insert id="addRecordDetail">
+        <!--insert ALL
+        <foreach collection="list" item="item" separator=" ">
+             into RECORDEXAMLIST (rel_exam_id,rel_answer,rel_correct,rel_re_id) values
+            ( #{item.relExamId}, #{item.relAnswer},#{item.relCorrect},#{reId})
+        </foreach>
+        SELECT * FROM dual-->
+        insert into RECORDEXAMLIST (rel_id,rel_exam_id,rel_answer,rel_correct,rel_re_id)
+        select ISEQ_RECORDEXAMLIST_ID.nextval, rel_exam_id,rel_answer,rel_correct,rel_re_id
+        from (
+        <foreach collection="list" index="index" item="item" separator="UNION ALL">
+            select
+            #{item.relExamId} REL_EXAM_ID,
+            #{item.relAnswer} REL_ANSWER,
+            #{item.relCorrect} REL_CORRECT,
+            #{reId} REL_RE_ID
+            from dual
+        </foreach>
+        ) A
+
+    </insert>
+
+    <select id="getHadSaveOrder" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM DRIVER_REPORT
+        WHERE "TIME"=to_date(#{date},'yyyy-mm-dd hh24:mi:ss') and job_number=#{driverId} and IS_DELETED=0
+    </select>
+
+    <insert id="saveOrderInfo" parameterType="com.zzj.dto.req.OrderReqDTO">
+        insert into DRIVER_REPORT (id,
+        <if test="date!=null and date!=''">
+            "TIME",
+        </if>
+        <if test="lineType!=null">
+            LINE_TYPE,
+        </if>
+        <if test="userId!=null">
+            name,
+        </if>
+        <if test="driverId!=null and driverId!=''">
+            job_number,
+        </if>
+        <if test="attendTime!=null and attendTime!=''">
+            join_time,
+        </if>
+        <if test="offTime!=null and offTime!=''">
+            end_time,
+        </if>
+        <if test="kilometer!=null">
+            kilometers,
+        </if>
+        <if test="workHour!=null">
+            work_hours,
+        </if>
+        <if test="tableId!=null">
+            SCHEDULE,
+        </if>
+        <if test="schedule!=null">
+            SCHEDULING_ID,
+        </if>
+
+        create_by,create_time)
+        values (#{id},
+        <if test="date!=null and date!=''">
+            to_date(#{date},'yyyy-mm-dd hh24:mi:ss'),
+        </if>
+        <if test="lineType!=null">
+            #{lineType},
+        </if>
+        <if test="userId!=null and userId!=''">
+            #{userId},
+        </if>
+        <if test="driverId!=null and driverId!=''">
+            #{driverId},
+        </if>
+        <if test="attendTime!=null and attendTime!=''">
+            to_date(#{attendTime},'yyyy-mm-dd hh24:mi:ss'),
+        </if>
+        <if test="offTime!=null and offTime!=''">
+            to_date(#{offTime},'yyyy-mm-dd hh24:mi:ss'),
+        </if>
+        <if test="kilometer!=null">
+            #{kilometer},
+        </if>
+        <if test="workHour!=null">
+            #{workHour},
+        </if>
+        <if test="tableId!=null">
+            #{tableId},
+        </if>
+        <if test="schedule!=null">
+            #{schedule},
+        </if>
+        #{driverId},
+        sysdate)
+    </insert>
+
+    <insert id="addOrderDetail">
+        insert into DRIVER_REPORT_DETAIL
+        (
+        ID,
+        DRIVER_REPORT_ID,
+        TRAIN_NUMBER_COUNT,
+        START_STATION,
+        RUN_TIME,
+        END_STATION,
+        QUIT_TIME)
+        select ISEQ_DRIVER_REPORT_DETAIL_ID.nextval, DRIVER_REPORT_ID,TRAIN_NUMBER_COUNT,START_STATION,RUN_TIME,END_STATION,QUIT_TIME
+        from (
+        <foreach collection="list" index="index" item="item" separator="UNION ALL">
+            select
+            #{orderId} DRIVER_REPORT_ID,
+            #{item.trainNum} TRAIN_NUMBER_COUNT,
+            #{item.startStation} START_STATION,
+            #{item.startTime} RUN_TIME,
+            #{item.endStation} END_STATION,
+            #{item.endTime} QUIT_TIME
+            from dual
+        </foreach>
+        ) A
+    </insert>
+
+    <insert id="addUserFace">
+        INSERT ALL
+        <foreach collection="faceList" item="item" separator="" index="index">
+            into SYS_USER_FACE
+            (
+            ID,
+            USER_NO,
+            FACE_FEATURE
+            )
+            values
+            (
+            sys_guid(),
+            #{userNo},
+            #{item}
+            )
+        </foreach>
+        select * from dual
+
+    </insert>
+
+    <insert id="insertKeyRecord">
+        insert into KEY_CABINET_LATTICE_RECORD
+        (ID,CABINET_ID,LATTICE_ID,USER_ID,SCHEDULING_ID, CROSSING_ID,USE_TIME,CREATE_TIME)
+        values
+        (
+        #{id},
+        #{cabinetId},
+        #{latticeId},
+        #{userId},
+        #{schedulingId},
+        #{crossingId},
+        sysdate,
+        sysdate)
+    </insert>
+
+        <update id="updateFace">
+            update IAM_USER set
+            FACE_FLAG = '1'
+            where USER_NUM = #{userNo}
+        </update>
+</mapper>

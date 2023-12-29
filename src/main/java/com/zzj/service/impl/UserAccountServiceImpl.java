@@ -361,7 +361,7 @@ public class UserAccountServiceImpl implements UserAccountService {
                 }
             }
         }
-        return resList;
+        return resList.stream().sorted(Comparator.comparing(TrainScheduleResDTO::getStartDepart)).collect(Collectors.toList());
     }
 
     /**

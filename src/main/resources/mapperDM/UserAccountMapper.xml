@@ -158,11 +158,12 @@
 
     <select id="getAttendQuit" resultType="com.zzj.dto.res.DmAttendQuitResDTO">
         SELECT
-            ID,
-            WORK_TYPE,
-            ACTION_TIME
+        ID,
+        WORK_TYPE,
+        ACTION_TIME
         FROM NEW_DRIVER_ATTEND_QUIT
-        WHERE NEW_SCHEDULING_ID = #{crId} and CLOCK_IN_USER=#{userId}
+        WHERE NEW_SCHEDULING_ID = #{crId} and DRIVER_ID=#{userId}
+        and ACTION_TIME>=(TRUNC(SYSDATE) + INTERVAL '1' HOUR)
     </select>
 
     <select id="listTrains" resultType="com.zzj.dto.res.TrainsResDTO">

@@ -50,6 +50,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -90,6 +92,8 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Autowired
     private RestTemplate restTemplate;
+    
+    private final String[] LIGHT_DAY = new String[]{"早（正）", "早（派）"};
 
     private final String[] DUTY_REST = new String[]{"孕", "年", "产", "病", "疗", "事", "育", "独", "丧", "婚", "护", "调", "休"};
 
@@ -225,7 +229,10 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     public DutyDetailResDTO getDutyInfo(CurrentLoginUser currentLoginUser) {
-        DutyDetailResDTO dutyInfo = dmUserAccountMapper.getDutyInfo(currentLoginUser.getUserId());
+        DutyDetailResDTO dutyInfo;
+        DutyDetailResDTO lastDutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), -1);
+        DutyDetailResDTO nowDutyInfo = dmUserAccountMapper.getDutyInfo(currentLoginUser.getUserId());
+        dutyInfo = dutyTimeDetermine() ? lastDutyInfo : nowDutyInfo;
         if (dutyInfo == null) {
             throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
         }
@@ -249,6 +256,9 @@ public class UserAccountServiceImpl implements UserAccountService {
         dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
         dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
         List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId(), currentLoginUser.getUserId());
+        if (Arrays.stream(LIGHT_DAY).anyMatch(light -> dutyInfo.getCrName().equals(light))) {
+            workList.add(new DmAttendQuitResDTO());
+        }
         if (workList.isEmpty()) {
             dutyInfo.setAttendFlag(0);
             dutyInfo.setQuitFlag(0);
@@ -261,6 +271,20 @@ public class UserAccountServiceImpl implements UserAccountService {
         }
         dutyInfo.setWorkRecord(workList);
         return dutyInfo;
+    }
+
+    /**
+     * 退勤时间延迟一小时
+     * @return 当前时间是否在0-1点之间
+     */
+    private boolean dutyTimeDetermine() {
+        // 当前时间
+        LocalDateTime now = LocalDateTime.now();
+        // 时间范围0点
+        LocalTime start0 = LocalTime.of(0, 0);
+        // 时间范围1点
+        LocalTime end1 = LocalTime.of(1, 0);
+        return (now.toLocalTime().isAfter(start0) && now.toLocalTime().isBefore(end1));
     }
 
     @Override

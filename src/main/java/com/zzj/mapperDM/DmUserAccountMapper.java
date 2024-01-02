@@ -52,9 +52,10 @@ public interface DmUserAccountMapper {
      * 获取出退勤情况
      * @param crId 排班id
      * @param userId 用户id
-     * @return
+     * @param type 类型
+     * @return 出退勤记录
      */
-    List<DmAttendQuitResDTO> getAttendQuit(Long crId, Long userId);
+    List<DmAttendQuitResDTO> getAttendQuit(Long crId, Long userId, Integer type);
 
     Integer dutyOn(AttendQuitReqDTO attendQuitReqDTO);
 

@@ -232,7 +232,8 @@ public class UserAccountServiceImpl implements UserAccountService {
         DutyDetailResDTO dutyInfo;
         DutyDetailResDTO lastDutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), -1);
         DutyDetailResDTO nowDutyInfo = dmUserAccountMapper.getDutyInfo(currentLoginUser.getUserId());
-        dutyInfo = dutyTimeDetermine() ? lastDutyInfo : nowDutyInfo;
+        // 根据当前时间是否已过1点判断
+        dutyInfo = (dutyTimeDetermine() ? lastDutyInfo : nowDutyInfo);
         if (dutyInfo == null) {
             throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
         }
@@ -255,7 +256,8 @@ public class UserAccountServiceImpl implements UserAccountService {
         dutyInfo.setDispatchUser(dmUserAccountMapper.getDispatchUser(dutyInfo.getClassType()));
         dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
         dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
-        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId(), currentLoginUser.getUserId());
+        // 根据当前时间是否已过1点判断
+        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId(), currentLoginUser.getUserId(), (dutyTimeDetermine() ? 1 : 2));
         if (Arrays.stream(LIGHT_DAY).anyMatch(light -> dutyInfo.getCrName().equals(light))) {
             workList.add(new DmAttendQuitResDTO());
         }

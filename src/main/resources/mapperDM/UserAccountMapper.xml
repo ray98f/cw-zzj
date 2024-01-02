@@ -163,7 +163,12 @@
         ACTION_TIME
         FROM NEW_DRIVER_ATTEND_QUIT
         WHERE NEW_SCHEDULING_ID = #{crId} and DRIVER_ID=#{userId}
-        and ACTION_TIME>=(TRUNC(SYSDATE) + INTERVAL '1' HOUR)
+        <if test="type==1">
+            and ACTION_TIME>=(TRUNC(SYSDATE-1) + INTERVAL '1' HOUR)
+        </if>
+        <if test="type==2">
+            and ACTION_TIME>=(TRUNC(SYSDATE) + INTERVAL '1' HOUR)
+        </if>
     </select>
 
     <select id="listTrains" resultType="com.zzj.dto.res.TrainsResDTO">

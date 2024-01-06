@@ -412,15 +412,16 @@
             ( #{item.relExamId}, #{item.relAnswer},#{item.relCorrect},#{reId})
         </foreach>
         SELECT * FROM dual-->
-        insert into RECORDEXAMLIST (rel_id,rel_exam_id,rel_answer,rel_correct,rel_re_id)
-        select ISEQ_RECORDEXAMLIST_ID.nextval, rel_exam_id,rel_answer,rel_correct,rel_re_id
+        insert into RECORDEXAMLIST (rel_id,rel_exam_id,rel_answer,rel_correct,rel_re_id, create_time)
+        select ISEQ_RECORDEXAMLIST_ID.nextval, rel_exam_id,rel_answer,rel_correct,rel_re_id,create_time
         from (
         <foreach collection="list" index="index" item="item" separator="UNION ALL">
             select
             #{item.relExamId} REL_EXAM_ID,
             #{item.relAnswer} REL_ANSWER,
             #{item.relCorrect} REL_CORRECT,
-            #{reId} REL_RE_ID
+            #{reId} REL_RE_ID,
+            SYSDATE CREATE_TIME
             from dual
         </foreach>
         ) A

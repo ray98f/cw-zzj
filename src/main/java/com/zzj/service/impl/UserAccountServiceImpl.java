@@ -254,8 +254,16 @@ public class UserAccountServiceImpl implements UserAccountService {
             dutyInfo.setFirstTrain(trains.get(0).getTrainName());
         }
         dutyInfo.setDispatchUser(dmUserAccountMapper.getDispatchUser(dutyInfo.getClassType()));
-        dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
-        dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
+        if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfo.getAttentime())) {
+            dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
+        } else {
+            dutyInfo.setAttentime("");
+        }
+        if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfo.getOfftime())) {
+            dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
+        } else {
+            dutyInfo.setOfftime("");
+        }
         // 根据当前时间是否已过1点判断
         List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId(), currentLoginUser.getUserId(), (dutyTimeDetermine() ? 1 : 2));
         if (Arrays.stream(LIGHT_DAY).anyMatch(light -> dutyInfo.getCrName().equals(light))) {
@@ -304,8 +312,16 @@ public class UserAccountServiceImpl implements UserAccountService {
                         break;
                     }
                 }
-                dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
-                dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
+                if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfo.getAttentime())) {
+                    dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
+                } else {
+                    dutyInfo.setAttentime("");
+                }
+                if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfo.getOfftime())) {
+                    dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
+                } else {
+                    dutyInfo.setOfftime("");
+                }
                 List<UserDutyReqDTO> trains = JSONArray.parseArray(dutyInfo.getStartRunCrossingroad(), UserDutyReqDTO.class);
                 if (!Objects.isNull(trains) && !trains.isEmpty()) {
                     dutyInfo.setFirstTrain(trains.get(0).getTrainName());

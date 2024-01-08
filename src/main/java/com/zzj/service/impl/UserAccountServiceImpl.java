@@ -229,11 +229,12 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     public DutyDetailResDTO getDutyInfo(CurrentLoginUser currentLoginUser) {
-        DutyDetailResDTO dutyInfo;
-        DutyDetailResDTO lastDutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), -1);
-        DutyDetailResDTO nowDutyInfo = dmUserAccountMapper.getDutyInfo(currentLoginUser.getUserId());
+        List<DutyDetailResDTO> lastDutyInfoList = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), -1);
+        List<DutyDetailResDTO> nowDutyInfosList = dmUserAccountMapper.getDutyInfo(currentLoginUser.getUserId());
+        DutyDetailResDTO lastDutyInfo = getNearlyDutyInfo(lastDutyInfoList);
+        DutyDetailResDTO nowDutyInfo = getNearlyDutyInfo(nowDutyInfosList);
         // 根据当前时间是否已过1点判断
-        dutyInfo = (dutyTimeDetermine() ? lastDutyInfo : nowDutyInfo);
+        DutyDetailResDTO dutyInfo = (dutyTimeDetermine() ? lastDutyInfo : nowDutyInfo);
         if (dutyInfo == null) {
             throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
         }
@@ -297,17 +298,36 @@ public class UserAccountServiceImpl implements UserAccountService {
         return (now.toLocalTime().isAfter(start0) && now.toLocalTime().isBefore(end1));
     }
 
+    /**
+     * 获取出勤时间最近的排班
+     * @param list 排班列表
+     * @return 排班信息
+     */
+    private DutyDetailResDTO getNearlyDutyInfo(List<DutyDetailResDTO> list) {
+        String now = new SimpleDateFormat("HHmmss").format(new Date());
+        if (com.zzj.utils.StringUtils.isEmpty(list)) {
+            return null;
+        } else if (com.zzj.utils.StringUtils.isNotEmpty(list) && list.size() == 1) {
+            return list.get(0);
+        } else {
+            return list.stream().min(Comparator.comparingInt(data -> Math.abs(Integer.parseInt(data.getAttentime()) - Integer.parseInt(now))))
+                    .orElseThrow(() -> new CommonException(ErrorCode.DUTY_INFO_ERROR));
+        }
+    }
+
     @Override
     public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser) {
         int i = 1;
         try {
-            DutyDetailResDTO dutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
+            List<DutyDetailResDTO> dutyInfoList = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
+            DutyDetailResDTO dutyInfo = getNearlyDutyInfo(dutyInfoList);
             if (!Objects.isNull(dutyInfo)) {
-                while (!Objects.isNull(dutyInfo.getCrName())) {
+                while (!Objects.isNull(Objects.requireNonNull(dutyInfo).getCrName())) {
                     DutyDetailResDTO finalDutyInfo = dutyInfo;
                     if (Arrays.stream(DUTY_REST).anyMatch(rest -> finalDutyInfo.getCrName().equals(rest))) {
                         i++;
-                        dutyInfo = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
+                        dutyInfoList = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
+                        dutyInfo = getNearlyDutyInfo(dutyInfoList);
                     } else {
                         break;
                     }

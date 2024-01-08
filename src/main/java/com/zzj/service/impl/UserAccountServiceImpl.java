@@ -1,37 +1,22 @@
 package com.zzj.service.impl;
 
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.core.util.XmlUtil;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.zzj.constant.CommonConstants;
 import com.zzj.dto.req.*;
 import com.zzj.dto.res.*;
-import com.zzj.entity.SysUser;
-import com.zzj.entity.SysUserAccount;
 import com.zzj.enums.ErrorCode;
 import com.zzj.exception.CommonException;
 import com.zzj.mapper.LogMapper;
-import com.zzj.mapper.UserAccountMapper;
 import com.zzj.mapperDM.DmUserAccountMapper;
 import com.zzj.mapperEip.EipUserAccountMapper;
 import com.zzj.service.UserAccountService;
 import com.zzj.shiro.CurrentLoginUser;
 import com.zzj.utils.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.executor.BatchResult;
-import org.apache.ibatis.session.ExecutorType;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -43,15 +28,9 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.URI;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -234,7 +213,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         DutyDetailResDTO lastDutyInfo = getNearlyDutyInfo(lastDutyInfoList);
         DutyDetailResDTO nowDutyInfo = getNearlyDutyInfo(nowDutyInfosList);
         // 根据当前时间是否已过1点判断
-        DutyDetailResDTO dutyInfo = (dutyTimeDetermine() ? lastDutyInfo : nowDutyInfo);
+        DutyDetailResDTO dutyInfo = (DateUtils.dutyTimeDetermine() ? lastDutyInfo : nowDutyInfo);
         if (dutyInfo == null) {
             throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
         }
@@ -255,47 +234,35 @@ public class UserAccountServiceImpl implements UserAccountService {
             dutyInfo.setFirstTrain(trains.get(0).getTrainName());
         }
         dutyInfo.setDispatchUser(dmUserAccountMapper.getDispatchUser(dutyInfo.getClassType()));
-        if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfo.getAttentime())) {
-            dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
-        } else {
-            dutyInfo.setAttentime("");
-        }
-        if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfo.getOfftime())) {
-            dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
-        } else {
-            dutyInfo.setOfftime("");
-        }
-        // 根据当前时间是否已过1点判断
-        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId(), currentLoginUser.getUserId(), (dutyTimeDetermine() ? 1 : 2));
-        if (Arrays.stream(LIGHT_DAY).anyMatch(light -> dutyInfo.getCrName().equals(light))) {
-            workList.add(new DmAttendQuitResDTO());
-        }
-        if (workList.isEmpty()) {
-            dutyInfo.setAttendFlag(0);
-            dutyInfo.setQuitFlag(0);
-        } else if (workList.size() == 1) {
-            dutyInfo.setAttendFlag(1);
-            dutyInfo.setQuitFlag(0);
-        } else {
-            dutyInfo.setAttendFlag(1);
-            dutyInfo.setQuitFlag(1);
-        }
-        dutyInfo.setWorkRecord(workList);
+        setDutyTime(dutyInfo);
+        setWorkState(dutyInfo, currentLoginUser.getUserId());
         return dutyInfo;
     }
 
-    /**
-     * 退勤时间延迟一小时
-     * @return 当前时间是否在0-1点之间
-     */
-    private boolean dutyTimeDetermine() {
-        // 当前时间
-        LocalDateTime now = LocalDateTime.now();
-        // 时间范围0点
-        LocalTime start0 = LocalTime.of(0, 0);
-        // 时间范围1点
-        LocalTime end1 = LocalTime.of(1, 0);
-        return (now.toLocalTime().isAfter(start0) && now.toLocalTime().isBefore(end1));
+    @Override
+    public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser) {
+        try {
+            int i = 1;
+            List<DutyDetailResDTO> dutyInfoList = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
+            DutyDetailResDTO dutyInfo = getNearlyDutyInfo(dutyInfoList);
+            while (Objects.isNull(dutyInfo) || !Objects.isNull(Objects.requireNonNull(dutyInfo).getCrName())) {
+                DutyDetailResDTO finalDutyInfo = dutyInfo;
+                if (com.zzj.utils.StringUtils.isNotNull(finalDutyInfo) && Arrays.stream(DUTY_REST).noneMatch(rest -> finalDutyInfo.getCrName().equals(rest))) {
+                    break;
+                }
+                i++;
+                dutyInfoList = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
+                dutyInfo = getNearlyDutyInfo(dutyInfoList);
+            }
+            setDutyTime(dutyInfo);
+            List<UserDutyReqDTO> trains = JSONArray.parseArray(dutyInfo.getStartRunCrossingroad(), UserDutyReqDTO.class);
+            if (!Objects.isNull(trains) && !trains.isEmpty()) {
+                dutyInfo.setFirstTrain(trains.get(0).getTrainName());
+            }
+            return dutyInfo;
+        } catch (Exception e) {
+            throw new CommonException(ErrorCode.NEXT_DUTY_INFO_ERROR);
+        }
     }
 
     /**
@@ -315,42 +282,45 @@ public class UserAccountServiceImpl implements UserAccountService {
         }
     }
 
-    @Override
-    public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser) {
-        int i = 1;
-        try {
-            List<DutyDetailResDTO> dutyInfoList = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
-            DutyDetailResDTO dutyInfo = getNearlyDutyInfo(dutyInfoList);
-            if (!Objects.isNull(dutyInfo)) {
-                while (!Objects.isNull(Objects.requireNonNull(dutyInfo).getCrName())) {
-                    DutyDetailResDTO finalDutyInfo = dutyInfo;
-                    if (Arrays.stream(DUTY_REST).anyMatch(rest -> finalDutyInfo.getCrName().equals(rest))) {
-                        i++;
-                        dutyInfoList = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
-                        dutyInfo = getNearlyDutyInfo(dutyInfoList);
-                    } else {
-                        break;
-                    }
-                }
-                if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfo.getAttentime())) {
-                    dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
-                } else {
-                    dutyInfo.setAttentime("");
-                }
-                if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfo.getOfftime())) {
-                    dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
-                } else {
-                    dutyInfo.setOfftime("");
-                }
-                List<UserDutyReqDTO> trains = JSONArray.parseArray(dutyInfo.getStartRunCrossingroad(), UserDutyReqDTO.class);
-                if (!Objects.isNull(trains) && !trains.isEmpty()) {
-                    dutyInfo.setFirstTrain(trains.get(0).getTrainName());
-                }
-            }
-            return dutyInfo;
-        } catch (Exception e) {
-            throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
+    /**
+     * 填充排班出退勤时间
+     * @param dutyInfo 排班信息
+     */
+    private void setDutyTime(DutyDetailResDTO dutyInfo) {
+        if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfo.getAttentime())) {
+            dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
+        } else {
+            dutyInfo.setAttentime("");
         }
+        if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfo.getOfftime())) {
+            dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
+        } else {
+            dutyInfo.setOfftime("");
+        }
+    }
+
+    /**
+     * 填充出退勤状态及出退勤信息
+     * @param dutyInfo 排班信息
+     * @param userId 用户id
+     */
+    private void setWorkState(DutyDetailResDTO dutyInfo, Long userId) {
+        // 根据当前时间是否已过1点判断
+        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId(), userId, (DateUtils.dutyTimeDetermine() ? 1 : 2));
+        if (Arrays.stream(LIGHT_DAY).anyMatch(light -> dutyInfo.getCrName().equals(light))) {
+            workList.add(new DmAttendQuitResDTO());
+        }
+        if (workList.isEmpty()) {
+            dutyInfo.setAttendFlag(0);
+            dutyInfo.setQuitFlag(0);
+        } else if (workList.size() == 1) {
+            dutyInfo.setAttendFlag(1);
+            dutyInfo.setQuitFlag(0);
+        } else {
+            dutyInfo.setAttendFlag(1);
+            dutyInfo.setQuitFlag(1);
+        }
+        dutyInfo.setWorkRecord(workList);
     }
 
     @Override

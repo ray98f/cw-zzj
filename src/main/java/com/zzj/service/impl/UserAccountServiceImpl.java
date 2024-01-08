@@ -441,6 +441,10 @@ public class UserAccountServiceImpl implements UserAccountService {
                         reqList.add(p);
                     }
                 });
+                for (OrderDetailReqDTO req : reqList) {
+                    req.setStartTime(new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + " " + timeChange(req.getStartTime()));
+                    req.setEndTime(new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + " " + timeChange(req.getEndTime()));
+                }
                 dmUserAccountMapper.addOrderDetail(reqList, orderInfo.getId());
             }
         } catch (Exception e) {

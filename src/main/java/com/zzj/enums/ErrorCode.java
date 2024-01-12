@@ -169,7 +169,17 @@ public enum ErrorCode {
     /**
      * 休班
      */
-    DUTY_REST(3200107, "duty.rest");
+    DUTY_REST(3200107, "duty.rest"),
+
+    /**
+     * 当前排班错误
+     */
+    DUTY_INFO_ERROR(3200108, "duty.info.error"),
+
+    /**
+     * 下个排班错误
+     */
+    NEXT_DUTY_INFO_ERROR(3200109, "next.duty.info.error");
 
 
 

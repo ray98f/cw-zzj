@@ -5,6 +5,8 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import java.lang.management.ManagementFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 
 /**
@@ -14,8 +16,7 @@ import java.util.Date;
  * @version 1.0
  * @date 2021/7/5 9:24
  */
-public class DateUtils extends org.apache.commons.lang3.time.DateUtils
-{
+public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     public static String YYYY = "yyyy";
 
     public static String YYYY_MM = "yyyy-MM";
@@ -71,19 +72,15 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
         return parseDateToStr(YYYY_MM_DD, date);
     }
 
-    public static final String parseDateToStr(final String format, final Date date)
-    {
+    public static final String parseDateToStr(final String format, final Date date) {
         return new SimpleDateFormat(format).format(date);
     }
 
-    public static final Date dateTime(final String format, final String ts)
-    {
-        try
-        {
+    public static final Date dateTime(final String format, final String ts) {
+        try {
             return new SimpleDateFormat(format).parse(ts);
         }
-        catch (ParseException e)
-        {
+        catch (ParseException e) {
             throw new RuntimeException(e);
         }
     }
@@ -91,8 +88,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
     /**
      * 日期路径 即年/月/日 如2018/08/08
      */
-    public static final String datePath()
-    {
+    public static final String datePath() {
         Date now = new Date();
         return DateFormatUtils.format(now, "yyyy/MM/dd");
     }
@@ -100,8 +96,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
     /**
      * 日期路径 即年/月/日 如20180808
      */
-    public static final String dateTime()
-    {
+    public static final String dateTime() {
         Date now = new Date();
         return DateFormatUtils.format(now, "yyyyMMdd");
     }
@@ -109,18 +104,14 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
     /**
      * 日期型字符串转化为日期 格式
      */
-    public static Date parseDate(Object str)
-    {
-        if (str == null)
-        {
+    public static Date parseDate(Object str) {
+        if (str == null) {
             return null;
         }
-        try
-        {
+        try {
             return parseDate(str.toString(), parsePatterns);
         }
-        catch (ParseException e)
-        {
+        catch (ParseException e) {
             return null;
         }
     }
@@ -128,8 +119,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
     /**
      * 获取服务器启动时间
      */
-    public static Date getServerStartDate()
-    {
+    public static Date getServerStartDate() {
         long time = ManagementFactory.getRuntimeMXBean().getStartTime();
         return new Date(time);
     }
@@ -137,8 +127,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
     /**
      * 计算两个时间差
      */
-    public static String getDatePoor(Date endDate, Date nowDate)
-    {
+    public static String getDatePoor(Date endDate, Date nowDate) {
         long nd = 1000 * 24 * 60 * 60;
         long nh = 1000 * 60 * 60;
         long nm = 1000 * 60;
@@ -154,5 +143,19 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
         // 计算差多少秒//输出结果
         // long sec = diff % nd % nh % nm / ns;
         return day + "天" + hour + "小时" + min + "分钟";
+    }
+
+    /**
+     * 判断当前时间是否在0-1点之间
+     * @return 当前时间是否在0-1点之间
+     */
+    public static boolean dutyTimeDetermine() {
+        // 当前时间
+        LocalDateTime now = LocalDateTime.now();
+        // 时间范围0点
+        LocalTime start0 = LocalTime.of(0, 0);
+        // 时间范围1点
+        LocalTime end1 = LocalTime.of(1, 0);
+        return (now.toLocalTime().isAfter(start0) && now.toLocalTime().isBefore(end1));
     }
 }

@@ -37,9 +37,9 @@ public interface DmUserAccountMapper {
 
     Integer addRecordDetail(List<RecordDetailReqDTO> list,Long reId);
 
-    DutyDetailResDTO getDutyInfo(Long userId);
+    List<DutyDetailResDTO> getDutyInfo(Long userId);
 
-    DutyDetailResDTO getNextDutyInfo(Long userId, int i);
+    List<DutyDetailResDTO> getNextDutyInfo(Long userId, int i);
 
     /**
      * 获取派班人员

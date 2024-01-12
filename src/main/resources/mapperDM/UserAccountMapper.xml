@@ -465,7 +465,6 @@
         <if test="schedule!=null">
             SCHEDULING_ID,
         </if>
-
         create_by,create_time)
         values (#{id},
         <if test="date!=null and date!=''">

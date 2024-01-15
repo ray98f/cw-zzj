@@ -1,10 +1,7 @@
 package com.zzj.mapperDM;
 
-import com.baomidou.mybatisplus.annotation.SqlParser;
 import com.zzj.dto.req.*;
 import com.zzj.dto.res.*;
-import io.swagger.models.auth.In;
-import jdk.nashorn.internal.parser.Token;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
 
@@ -14,14 +11,9 @@ import java.util.List;
 @Repository
 public interface DmUserAccountMapper {
 
-
     IamUserResDTO getUserByName(String userName);
 
     SysUserCardResDTO getUserByCard(String uuid);
-
-    String getUserByFace(String face);
-
-    SystemUserResDTO getUserByFinger(String userName);
 
     UserAccountDetailResDTO getUserDetail(String userNo);
 
@@ -112,14 +104,4 @@ public interface DmUserAccountMapper {
     Integer addUserFace(String userNo,List<String> faceList);
 
     Integer updateFace(String userNo);
-
-    Integer cleanUserCardTable();
-
-    CheckDutyResDTO checkDutyInfo(Long userId,Long id);
-
-    List<UserKeyStoreRecordResDTO> getKeyRecord(CheckDutyResDTO duty);
-
-    KeyCabinetResDTO getKeyCabinetInfo(String boxNum,String keyNum);
-
-    Integer insertKeyRecord(UserKeyStoreRecordResDTO userKeyStoreRecord);
 }

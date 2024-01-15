@@ -1,9 +1,9 @@
 package com.zzj.service.impl;
 
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.extension.api.R;
 import com.zzj.constant.CommonConstants;
 import com.zzj.dto.req.*;
 import com.zzj.dto.res.*;
@@ -25,8 +25,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponents;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
@@ -71,12 +69,12 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Autowired
     private RestTemplate restTemplate;
-    
-    private final String[] LIGHT_DAY = new String[]{"早（正）", "早（派）"};
 
-    private final String[] DUTY_REST = new String[]{"孕", "年", "产", "病", "疗", "事", "育", "独", "丧", "婚", "护", "调", "休"};
+    private final String[] DUTY_REST = new String[] {"孕", "年", "产", "病", "疗", "事", "育", "独", "丧", "婚", "护", "调", "休"};
 
-    private final String[] CROSSING_ROAD_TYPE = new String[]{"指导司机", "司机长", "调车"};
+    private final String[] CROSSING_ROAD_TYPE = new String[] {"指导司机", "司机长", "调车"};
+
+    private final String EARLY_CLASS_TYPE = "1";
 
     @Override
     public String getUser(UserLoginReqDTO userLoginReqDTO, HttpServletRequest request) {
@@ -277,8 +275,12 @@ public class UserAccountServiceImpl implements UserAccountService {
         } else if (com.zzj.utils.StringUtils.isNotEmpty(list) && list.size() == 1) {
             return list.get(0);
         } else {
-            return list.stream().min(Comparator.comparingInt(data -> Math.abs(Integer.parseInt(data.getAttentime()) - Integer.parseInt(now))))
-                    .orElseThrow(() -> new CommonException(ErrorCode.DUTY_INFO_ERROR));
+            try {
+                return list.stream().min(Comparator.comparingInt(data -> Math.abs(Integer.parseInt(data.getAttentime()) - Integer.parseInt(now))))
+                        .orElseThrow(() -> new CommonException(ErrorCode.DUTY_INFO_ERROR));
+            } catch (Exception e) {
+                throw new CommonException(ErrorCode.DUTY_INFO_ERROR);
+            }
         }
     }
 
@@ -288,12 +290,12 @@ public class UserAccountServiceImpl implements UserAccountService {
      */
     private void setDutyTime(DutyDetailResDTO dutyInfo) {
         if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfo.getAttentime())) {
-            dutyInfo.setAttentime(timeChange(dutyInfo.getAttentime()));
+            dutyInfo.setAttentime(DateUtils.timeChange(dutyInfo.getAttentime()));
         } else {
             dutyInfo.setAttentime("");
         }
         if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfo.getOfftime())) {
-            dutyInfo.setOfftime(timeChange(dutyInfo.getOfftime()));
+            dutyInfo.setOfftime(DateUtils.timeChange(dutyInfo.getOfftime()));
         } else {
             dutyInfo.setOfftime("");
         }
@@ -305,10 +307,14 @@ public class UserAccountServiceImpl implements UserAccountService {
      * @param userId 用户id
      */
     private void setWorkState(DutyDetailResDTO dutyInfo, Long userId) {
+        String day = (DateUtils.dutyTimeDetermine() ? DateUtils.getYesterday() : DateUtils.getToday());
         // 根据当前时间是否已过1点判断
         List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId(), userId, (DateUtils.dutyTimeDetermine() ? 1 : 2));
-        if (Arrays.stream(LIGHT_DAY).anyMatch(light -> dutyInfo.getCrName().equals(light))) {
-            workList.add(new DmAttendQuitResDTO());
+        // 交路类型包含司机长、指导司机、调车且班次类型为早班  早班不出勤
+        if (!Objects.isNull(dutyInfo.getCrossingRoadTypeName())) {
+            if (Arrays.stream(CROSSING_ROAD_TYPE).anyMatch(type -> dutyInfo.getCrossingRoadTypeName().contains(type)) && EARLY_CLASS_TYPE.equals(dutyInfo.getClassType())) {
+                workList.add(new DmAttendQuitResDTO());
+            }
         }
         if (workList.isEmpty()) {
             dutyInfo.setAttendFlag(0);
@@ -428,7 +434,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         try {
             orderInfo.setId(snowflakeGenerator.next());
             if (!Objects.isNull(orderInfo.getOffTime()) && !orderInfo.getOffTime().isEmpty()) {
-                orderInfo.setOffTime(new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + " " + orderInfo.getOffTime());
+                orderInfo.setOffTime(DateUtils.getToday() + " " + orderInfo.getOffTime());
             }
             res = dmUserAccountMapper.saveOrderInfo(orderInfo);
             boolean orderInfoEmpty = orderInfo.getList() != null && !orderInfo.getList().isEmpty();
@@ -442,8 +448,8 @@ public class UserAccountServiceImpl implements UserAccountService {
                     }
                 });
                 for (OrderDetailReqDTO req : reqList) {
-                    req.setStartTime(new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + " " + timeChange(req.getStartTime()));
-                    req.setEndTime(new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + " " + timeChange(req.getEndTime()));
+                    req.setStartTime(DateUtils.getToday() + " " + DateUtils.timeChange(req.getStartTime()));
+                    req.setEndTime(DateUtils.getToday() + " " + DateUtils.timeChange(req.getEndTime()));
                 }
                 dmUserAccountMapper.addOrderDetail(reqList, orderInfo.getId());
             }
@@ -475,60 +481,6 @@ public class UserAccountServiceImpl implements UserAccountService {
         } catch (Exception e) {
             throw new CommonException(ErrorCode.INSERT_ERROR);
         }
-    }
-
-    @Override
-    public CheckKeyStoreResDTO checkKeyStore(CurrentLoginUser currentLoginUser, HashMap<String, Object> map) {
-        CheckKeyStoreResDTO res = new CheckKeyStoreResDTO();
-
-        Long id = Long.parseLong(map.get("id").toString());
-
-        CheckDutyResDTO dutyInfo = dmUserAccountMapper.checkDutyInfo(currentLoginUser.getUserId(), id);
-        res.setCheckDutyInfo(dutyInfo);
-        if (dutyInfo != null && StrUtil.contains(dutyInfo.getCrName(), CommonConstants.DUTY_OFF_CR_NAME_CHECK)) {
-            List<UserKeyStoreRecordResDTO> list = dmUserAccountMapper.getKeyRecord(dutyInfo);
-            if (list == null || list.isEmpty()) {
-
-                //TODO 调用钥匙柜接口查询本日归还记录
-                String accessToken = getKeyBoxAuth();
-                List<RecordData> recList = getKeyBoxRecord(dutyInfo, accessToken);
-                if (recList != null && !recList.isEmpty()) {
-                    res.setCheckRes(1); //晚班  有归还记录
-                    RecordData rec = recList.get(0);
-
-                    //柜子编号,钥匙编号 格子
-                    String boxNum = rec.getBoxNumber().toString();
-                    String keyNum = String.format("%03d", rec.getKeyNumber());
-                    KeyCabinetResDTO keyInfo = dmUserAccountMapper.getKeyCabinetInfo(boxNum, keyNum);
-
-                    UserKeyStoreRecordResDTO userKeyStoreRecord = new UserKeyStoreRecordResDTO();
-                    SnowFlakeIdUtils snowFlakeIdUtils = new SnowFlakeIdUtils();
-                    userKeyStoreRecord.setId(snowFlakeIdUtils.nextId());
-                    userKeyStoreRecord.setCabinetId(keyInfo.getBoxId());
-                    userKeyStoreRecord.setLatticeId(keyInfo.getKeyId());
-                    userKeyStoreRecord.setUserId(dutyInfo.getNewDriverInfoId());
-                    userKeyStoreRecord.setUseTime(new Date());
-                    userKeyStoreRecord.setSchedulingId(dutyInfo.getId());
-                    userKeyStoreRecord.setCrossingId(dutyInfo.getCrId());
-                    dmUserAccountMapper.insertKeyRecord(userKeyStoreRecord);
-
-                    res.setUserKeyStoreRecordRes(userKeyStoreRecord);
-
-                } else {
-                    res.setCheckRes(0); //晚班 未归还钥匙
-                }
-
-                return res;
-            } else {
-                res.setCheckRes(1);//晚班 有存放记录 可归还
-                res.setUserKeyStoreRecordRes(list.get(0)); //记录信息
-                return res;
-            }
-        } else {
-            res.setCheckRes(3);//非晚班不检测钥匙存放
-            return res;
-        }
-
     }
 
     private SystemUserResDTO loginByPwd(UserLoginReqDTO userLoginReqDTO) {
@@ -572,79 +524,10 @@ public class UserAccountServiceImpl implements UserAccountService {
         return user;
     }
 
-    private String timeChange(String timeNum) {
-        String timeStr = String.format("%06d", Integer.parseInt(timeNum));
-        String newTimeStr = "";
-        if (timeStr.length() == 6) {
-            newTimeStr += timeStr.substring(0, 2) + ":";
-            newTimeStr += timeStr.substring(2, 4) + ":";
-            newTimeStr += timeStr.substring(4, 6);
-        }
-        return newTimeStr;
-    }
-
-    private String getKeyBoxAuth() {
-        String accessToken = "";
-        String url = keyBoxAuthUrl + "?name=" + keyBoxUserName + "&Psw=" + keyBoxUserPwd;
-        UriComponents uriComponents = UriComponentsBuilder.fromUriString(url)
-                .build()
-                .expand()
-                .encode();
-        URI uri = uriComponents.toUri();
-        JSONObject res = restTemplate.getForEntity(uri, JSONObject.class).getBody();
-
-        if (CommonConstants.KEY_BOX_RES_CODE.equals(Objects.requireNonNull(res).getInteger(CommonConstants.KEY_BOX_RESULT_CODE))) {
-            JSONObject data = res.getJSONObject(CommonConstants.KEY_BOX_RESULT_DATA);
-            accessToken = data.getString(CommonConstants.KEY_BOX_TOKEN);
-        }
-        return accessToken;
-    }
-
-    private List<RecordData> getKeyBoxRecord(CheckDutyResDTO dutyInfo, String accessToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.valueOf("application/json;UTF-8"));
-        headers.add("Authorization", "Bearer " + accessToken);
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Date currentTime = new Date();
-        String startTime = sdf.format(currentTime) + CommonConstants.DATE_START;
-        String endTime = sdf.format(currentTime) + CommonConstants.DATE_END;
-
-        //根据同班次两司机来查询钥匙存放记录
-        InRecord inRecord = new InRecord();
-        inRecord.setDepartmentId(keyBoxUserDept);//部门必填
-        inRecord.setUserNumber(dutyInfo.getNewDriverNo()); // 查询 主控司机
-        inRecord.setStartTime(startTime);
-        inRecord.setEndTime(endTime);
-        inRecord.setPageIndex(CommonConstants.DEFAULT_PAGE_INDEX);
-        inRecord.setPageSize(CommonConstants.DEFAULT_PAGE_SIZE);
-
-        HttpEntity<String> strEntity = new HttpEntity<>(JSONObject.toJSONString(inRecord), headers);
-        JSONObject json = restTemplate.postForEntity(keyBoxRecordUrl, strEntity, JSONObject.class).getBody();
-
-        if (!CommonConstants.KEY_BOX_RES_CODE.equals(Objects.requireNonNull(json).getString(CommonConstants.KEY_BOX_RESULT_CODE))) {
-            return null;
-        }
-
-        if (json.getJSONArray(CommonConstants.KEY_BOX_RECORD_DATA) != null) {
-            return JSONArray.parseArray(json.getJSONArray(CommonConstants.KEY_BOX_RECORD_DATA).toJSONString(), RecordData.class);
-        } else {
-            inRecord.setUserNumber(dutyInfo.getAssistantDriverNo()); //  查询 副控司机
-            HttpEntity<String> strEntity2 = new HttpEntity<>(JSONObject.toJSONString(inRecord), headers);
-            JSONObject json2 = restTemplate.postForEntity(keyBoxRecordUrl, strEntity2, JSONObject.class).getBody();
-            if (!CommonConstants.KEY_BOX_RES_CODE.equals(Objects.requireNonNull(json2).getString(CommonConstants.KEY_BOX_RESULT_CODE))) {
-                return null;
-            } else {
-                return JSONArray.parseArray(json2.getJSONArray(CommonConstants.KEY_BOX_RECORD_DATA).toJSONString(), RecordData.class);
-            }
-        }
-    }
-
     public String cardChange(String cardUuid) {
         //20 101C0FBF 000820   16
         String excludeHead = (cardUuid.substring(2, cardUuid.length()));
         String atqaSakStr = (cardUuid.substring(cardUuid.length() - 6));
         return excludeHead.replace(atqaSakStr, "");
     }
-
 }

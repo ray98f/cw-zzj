@@ -78,15 +78,6 @@ public class UserAccountController {
         return DataResponse.of(userAccountService.dutyOn(currentLoginUser,attendQuitReqDTO));
     }
 
-    @PostMapping ("/checkKeyStore")
-    @ApiOperation(value = "校验钥匙归还")
-    @SneakyThrows
-    public DataResponse<CheckKeyStoreResDTO> checkKeyStore(@CurrUser CurrentLoginUser currentLoginUser,
-                                              @RequestBody HashMap<String,Object> map) {
-
-        return DataResponse.of(userAccountService.checkKeyStore(currentLoginUser,map));
-    }
-
     @PostMapping("/dutyOff")
     @ApiOperation(value = "退勤")
     public DataResponse<String> quitSave(@CurrUser CurrentLoginUser currentLoginUser,@RequestBody AttendQuitReqDTO attendQuitReqDTO){
@@ -145,13 +136,6 @@ public class UserAccountController {
     @ApiOperation(value = "获取车站")
     public DataResponse<List<TrainStationResDTO>> trainStation(@RequestParam String trainNum) {
         return DataResponse.of(userAccountService.getStationList(trainNum));
-    }
-
-    @GetMapping("/boxList")
-    @ApiOperation(value = "获取钥匙柜列表")
-    public DataResponse<List<T>> boxList(@RequestParam String trainNum) {
-        // TODO 钥匙柜接口：终端信息查询接口（Terminal_Query）
-        return null;
     }
 
     @GetMapping("/featureList")

@@ -157,10 +157,7 @@
     </select>
 
     <select id="getAttendQuit" resultType="com.zzj.dto.res.DmAttendQuitResDTO">
-        SELECT
-        ID,
-        WORK_TYPE,
-        ACTION_TIME
+        SELECT ID, WORK_TYPE, ACTION_TIME, KEY_CABINET_NAME
         FROM NEW_DRIVER_ATTEND_QUIT
         WHERE NEW_SCHEDULING_ID = #{crId} and DRIVER_ID=#{userId}
         <if test="type==1">
@@ -262,94 +259,8 @@
         SELECT * FROM SYS_USER_FACE
     </select>
 
-    <select id="checkDutyInfo" resultType="com.zzj.dto.res.CheckDutyResDTO">
-        SELECT
-            t1.ID,
-            t1.NEW_CROSSINGROAD_ID as crId,
-            t1.NEW_CROSSINGROAD_NAME as crName,
-            t1.ARRANGE_DATE as recDate,
-            t1.NEW_DRIVER_INFO_ID,
-            t1.ASSISTANT_DRIVER_ID,
-            t2.USER_NUM AS NEW_DRIVER_NO,
-            t3.USER_NUM AS ASSISTANT_DRIVER_NO
-        FROM NEW_SCHEDULING t1
-        LEFT JOIN IAM_USER t2 ON t1.NEW_DRIVER_INFO_ID = t2.ID
-        LEFT JOIN IAM_USER t3 ON t1.ASSISTANT_DRIVER_ID  = t3.ID
-        WHERE trunc(t1.ARRANGE_DATE)=trunc(sysdate)  AND  t1.ID = #{ID}
-        AND (t1.NEW_DRIVER_INFO_ID = #{userId} OR t1.ASSISTANT_DRIVER_ID = #{userId})
-    </select>
-
-    <select id="checkDutyInfo" resultType="com.zzj.dto.res.UserKeyStoreRecordResDTO">
-        SELECT * FROM KEY_CABINET_LATTICE_RECORD WHERE IS_DELETED = 0 AND ( USER_ID = #{newDriverInfoId} OR USER_ID = #{assistantDriverId})
-        AND TO_CHAR(USE_TIME,'YYYY-MM-DD') = TO_CHAR(SYSDATE,'YYYY-MM-DD')
-    </select>
-
-    <!--
-        @ApiModelProperty(value = "ID")
-    private Long id;
-
-    @ApiModelProperty(value = "名字")
-    private Long latticeId;
-
-    @ApiModelProperty(value = "用户ID")
-    private Long userId;
-
-    @ApiModelProperty(value = "存储时间")
-    private Date useTime;
-
-    @ApiModelProperty(value = "排班ID")
-    private Long schedulingId;
-
-    @ApiModelProperty(value = "交路ID")
-    private Long crossingId;
-
-    @ApiModelProperty(value = "钥匙ID")
-    private Long cabinetId;
-    -->
-    <select id="getKeyRecord" resultType="com.zzj.dto.res.UserKeyStoreRecordResDTO">
-        SELECT t1.ID,t1.LATTICE_ID,t1.USER_ID,t1.USE_TIME,t1.scheduling_Id,t1.crossing_Id,t1.cabinet_Id,t2.KEY_CABINET_CODE,t3.LATTICE_CODE
-        from KEY_CABINET_LATTICE_RECORD t1
-        left join KEY_CABINET_INFORMATION t2 on t1.cabinet_Id = t2.id
-        left join KEY_CABINET_LATTICE t3 on t1.LATTICE_ID = t3.id
-        where (t1.USER_ID = #{newDriverInfoId} or t1.USER_ID = #{assistantDriverId}) and
-        t1.USE_TIME BETWEEN sysdate-interval '1' hour AND SYSDATE
-    </select>
-
-    <select id="getKeyCabinetInfo" resultType="com.zzj.dto.res.UserKeyStoreRecordResDTO">
-        SELECT  t2.ID AS KEY_ID,
-                t2.CABINET_ID AS BoxId,
-                t2.LATTICE_CODE,
-                t2.LATTICE_NAME,
-                t2.LATTICE_STATUS,
-                t1.KEY_CABINET_CODE,
-                t1.KEY_CABINET_NAME
-        FROM KEY_CABINET_LATTICE t2
-        LEFT JOIN KEY_CABINET_INFORMATION t1 ON t2.CABINET_ID  = t1.ID
-        WHERE t2.LATTICE_CODE  = #{boxNum} AND t1.KEY_CABINET_CODE = #{boxNum}
-    </select>
-
 
     <insert id="dutyOn" parameterType="com.zzj.dto.req.AttendQuitReqDTO">
-        <!--insert into CW_BACKGROUND_RECORD
-        (
-            ID,
-            USER_ID,
-            CRUSERDELID,
-            ATTENDANCETIME,
-            RECDATE,
-            ATTENTUSER,
-            ALCOHOLTEST,
-            BLOODPRESSURE
-        )
-        values
-        (sys_guid(),
-         #{userId},
-        #{cruserdelid},
-        to_date(#{attendTime},'yyyy-mm-dd hh24:mi:ss'),
-        to_date(#{recDate},'yyyy-mm-dd hh24:mi:ss'),
-        #{attentuser},
-        #{alcoholtest},
-        0)-->
         insert into NEW_DRIVER_ATTEND_QUIT
         (
         ID,
@@ -406,12 +317,6 @@
     </insert>
 
     <insert id="addRecordDetail">
-        <!--insert ALL
-        <foreach collection="list" item="item" separator=" ">
-             into RECORDEXAMLIST (rel_exam_id,rel_answer,rel_correct,rel_re_id) values
-            ( #{item.relExamId}, #{item.relAnswer},#{item.relCorrect},#{reId})
-        </foreach>
-        SELECT * FROM dual-->
         insert into RECORDEXAMLIST (rel_id,rel_exam_id,rel_answer,rel_correct,rel_re_id, create_time)
         select ISEQ_RECORDEXAMLIST_ID.nextval, rel_exam_id,rel_answer,rel_correct,rel_re_id,create_time
         from (
@@ -425,7 +330,6 @@
             from dual
         </foreach>
         ) A
-
     </insert>
 
     <select id="getHadSaveOrder" resultType="java.lang.Integer">
@@ -543,27 +447,11 @@
             )
         </foreach>
         select * from dual
-
     </insert>
 
-    <insert id="insertKeyRecord">
-        insert into KEY_CABINET_LATTICE_RECORD
-        (ID,CABINET_ID,LATTICE_ID,USER_ID,SCHEDULING_ID, CROSSING_ID,USE_TIME,CREATE_TIME)
-        values
-        (
-        #{id},
-        #{cabinetId},
-        #{latticeId},
-        #{userId},
-        #{schedulingId},
-        #{crossingId},
-        sysdate,
-        sysdate)
-    </insert>
-
-        <update id="updateFace">
-            update IAM_USER set
-            FACE_FLAG = '1'
-            where USER_NUM = #{userNo}
-        </update>
+    <update id="updateFace">
+        update IAM_USER set
+        FACE_FLAG = '1'
+        where USER_NUM = #{userNo}
+    </update>
 </mapper>

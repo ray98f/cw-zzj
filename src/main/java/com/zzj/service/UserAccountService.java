@@ -66,8 +66,4 @@ public interface UserAccountService {
 
     Integer faceRegister(CurrentLoginUser currentLoginUser,List<HashMap<String,Object>> list);
 
-    CheckKeyStoreResDTO checkKeyStore(CurrentLoginUser currentLoginUser,HashMap<String,Object> map);
-
-    // void getKeyRecord();
-
 }

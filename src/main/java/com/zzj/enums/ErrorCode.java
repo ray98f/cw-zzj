@@ -179,7 +179,12 @@ public enum ErrorCode {
     /**
      * 下个排班错误
      */
-    NEXT_DUTY_INFO_ERROR(3200109, "next.duty.info.error");
+    NEXT_DUTY_INFO_ERROR(3200109, "next.duty.info.error"),
+
+    /**
+     * 钥匙柜外部接口错误
+     */
+    KEY_CABINET_OPENAPI_ERROR(3200110, "key.cabinet.openapi.error");
 
 
 

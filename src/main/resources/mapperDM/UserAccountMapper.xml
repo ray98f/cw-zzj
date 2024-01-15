@@ -168,6 +168,13 @@
         </if>
     </select>
 
+    <select id="getQuit" resultType="com.zzj.dto.res.DmAttendQuitResDTO">
+        SELECT ID, WORK_TYPE, ACTION_TIME, KEY_CABINET_NAME
+        FROM NEW_DRIVER_ATTEND_QUIT
+        WHERE DRIVER_ID=#{userId} and WORK_TYPE=2 and rownum=1
+        order by ACTION_TIME desc
+    </select>
+
     <select id="listTrains" resultType="com.zzj.dto.res.TrainsResDTO">
         SELECT t1.ID, t1.TRAIN_NAME
         FROM NEW_TRAIN_NUMBER t1
@@ -269,6 +276,9 @@
         NEW_SCHEDULING_ID,
         "alcohol_check_status",
         "alcohol_check_result",
+        <if test="keyCabinet!=null and keyCabinet!=''">
+            KEY_CABINET_NAME,
+        </if>
         CLOCK_IN_USER,
         DRIVER_ID,
         CREATE_BY
@@ -281,6 +291,9 @@
         #{newSchedulingId},
         #{alcoholTestStatus},
         #{alcoholResult},
+        <if test="keyCabinet!=null and keyCabinet!=''">
+            #{keyCabinet},
+        </if>
         #{userId},
         #{userId},
         #{userId}
@@ -294,6 +307,9 @@
         WORK_TYPE,
         ACTION_TIME,
         NEW_SCHEDULING_ID,
+        <if test="keyCabinet!=null and keyCabinet!=''">
+            KEY_CABINET_NAME,
+        </if>
         CLOCK_IN_USER,
         DRIVER_ID,
         CREATE_BY
@@ -304,6 +320,9 @@
         #{workType},
         to_date(#{actionTime},'yyyy-mm-dd hh24:mi:ss'),
         #{newSchedulingId},
+        <if test="keyCabinet!=null and keyCabinet!=''">
+            #{keyCabinet},
+        </if>
         #{userId},
         #{userId},
         #{userId}

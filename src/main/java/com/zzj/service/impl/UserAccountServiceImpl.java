@@ -32,6 +32,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.zzj.constant.KeyCabinetConstants.*;
+
 /**
  * @author frp
  */
@@ -40,20 +42,17 @@ import java.util.stream.Collectors;
 @Transactional
 public class UserAccountServiceImpl implements UserAccountService {
 
-    @Value("${keyBox.auth-url}")
-    private String keyBoxAuthUrl;
+    @Value("${key-cabinet.base-url}")
+    private String keyCabinetBaseUrl;
 
-    @Value("${keyBox.user-name}")
-    private String keyBoxUserName;
+    @Value("${key-cabinet.name}")
+    private String keyCabinetName;
 
-    @Value("${keyBox.user-pwd}")
-    private String keyBoxUserPwd;
+    @Value("${key-cabinet.pwd}")
+    private String keyCabinetPwd;
 
-    @Value("${keyBox.record-url}")
-    private String keyBoxRecordUrl;
-
-    @Value("${keyBox.record-url}")
-    private String keyBoxUserDept;
+    @Value("${key-cabinet.dept}")
+    private String keyCabinetDept;
 
     @Autowired
     private SnowflakeGenerator snowflakeGenerator;
@@ -233,7 +232,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         }
         dutyInfo.setDispatchUser(dmUserAccountMapper.getDispatchUser(dutyInfo.getClassType()));
         setDutyTime(dutyInfo);
-        setWorkState(dutyInfo, currentLoginUser.getUserId());
+        setWorkState(dutyInfo, currentLoginUser);
         return dutyInfo;
     }
 
@@ -304,12 +303,12 @@ public class UserAccountServiceImpl implements UserAccountService {
     /**
      * 填充出退勤状态及出退勤信息
      * @param dutyInfo 排班信息
-     * @param userId 用户id
+     * @param currentLoginUser 用户信息
      */
-    private void setWorkState(DutyDetailResDTO dutyInfo, Long userId) {
+    private void setWorkState(DutyDetailResDTO dutyInfo, CurrentLoginUser currentLoginUser) {
         String day = (DateUtils.dutyTimeDetermine() ? DateUtils.getYesterday() : DateUtils.getToday());
         // 根据当前时间是否已过1点判断
-        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId(), userId, (DateUtils.dutyTimeDetermine() ? 1 : 2));
+        List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId(), currentLoginUser.getUserId(), (DateUtils.dutyTimeDetermine() ? 1 : 2));
         // 交路类型包含司机长、指导司机、调车且班次类型为早班  早班不出勤
         if (!Objects.isNull(dutyInfo.getCrossingRoadTypeName())) {
             if (Arrays.stream(CROSSING_ROAD_TYPE).anyMatch(type -> dutyInfo.getCrossingRoadTypeName().contains(type)) && EARLY_CLASS_TYPE.equals(dutyInfo.getClassType())) {
@@ -326,6 +325,8 @@ public class UserAccountServiceImpl implements UserAccountService {
             dutyInfo.setAttendFlag(1);
             dutyInfo.setQuitFlag(1);
         }
+        // 根据出勤状态获取钥匙柜信息
+        dutyInfo.setKeyCabinet(getKeyCabinet(currentLoginUser, dutyInfo.getOfftime(), dutyInfo.getAttendFlag() == 0 ? 1 : 2, day));
         dutyInfo.setWorkRecord(workList);
     }
 
@@ -461,6 +462,82 @@ public class UserAccountServiceImpl implements UserAccountService {
     @Override
     public List<TrainStationResDTO> getStationList(String trainNum) {
         return dmUserAccountMapper.getTrainStation(trainNum);
+    }
+
+    /**
+     * 获取钥匙柜信息
+     * @param currentLoginUser 用户信息
+     * @param offTime 退勤时间
+     * @param type 类型 1 出勤 2 退勤
+     * @param day 日期
+     * @return 钥匙柜信息
+     */
+    public String getKeyCabinet(CurrentLoginUser currentLoginUser, String offTime, Integer type, String day) {
+        String token = getToken();
+        if (com.zzj.utils.StringUtils.isEmpty(offTime)) {
+            return "";
+        }
+        if (type == 1) {
+            DmAttendQuitResDTO quitRes = dmUserAccountMapper.getQuit(currentLoginUser.getUserId());
+            if (Objects.isNull(quitRes)) {
+                throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
+            }
+            return quitRes.getKeyCabinetName();
+        }
+        if (type == 2) {
+            String startTime = day + " " + DateUtils.timeChange(offTime);
+            List<KeyCabinetResDTO> list = getKeyCabinetRecords(token, startTime, currentLoginUser.getPersonNo());
+            if (com.zzj.utils.StringUtils.isNotEmpty(list)) {
+                // todo 处理钥匙取还记录信息
+                list = list.stream().sorted(Comparator.comparing(KeyCabinetResDTO::getDoorCloseTime).reversed()).collect(Collectors.toList());
+                return String.valueOf(list.get(0).getBoxNumber());
+            }
+        }
+        return "";
+    }
+
+    /**
+     * 获取钥匙柜信息获取token
+     * @return token
+     */
+    private String getToken() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("name", keyCabinetName);
+        jsonObject.put("Psw", keyCabinetPwd);
+        JSONObject res = restTemplate.postForEntity(keyCabinetBaseUrl + GET_TOKEN_URL, jsonObject, JSONObject.class).getBody();
+        if (!RESULT_CODE_SUCCESS.equals(Objects.requireNonNull(res).getString(RESULT_CODE))) {
+            throw new CommonException(ErrorCode.KEY_CABINET_OPENAPI_ERROR, String.valueOf(res.get(RESULT_MESSAGE)));
+        }
+        return res.getJSONObject(RESULT_DATA).getString(ACCESS_TOKEN);
+    }
+
+    /**
+     * 获取用户在指定时间范围内钥匙取还记录信息
+     * @param token token
+     * @param startTime 范围开始时间
+     * @param userNo 用户工号
+     * @return 钥匙取还记录列表
+     */
+    private List<KeyCabinetResDTO> getKeyCabinetRecords(String token, String startTime, String userNo) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.valueOf("application/json;UTF-8"));
+        headers.add("Authorization", "Bearer " + token);
+        String url = keyCabinetBaseUrl + GET_KEY_RECORDS_URL;
+        JSONObject params = new JSONObject();
+        params.put("DepartmentId", keyCabinetDept);
+        params.put("UserNumber", userNo);
+        // 取钥匙状态 取钥匙、还钥匙
+        params.put("State", "还钥匙");
+        params.put("StartTime", startTime);
+        params.put("EndTime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+        params.put("PageIndex", 1);
+        params.put("PageSize", 50);
+        HttpEntity<String> strEntity = new HttpEntity<>(params.toJSONString(), headers);
+        JSONObject res = restTemplate.postForObject(url, strEntity, JSONObject.class);
+        if (!RESULT_CODE_SUCCESS.equals(Objects.requireNonNull(res).getString(RESULT_CODE))) {
+            throw new CommonException(ErrorCode.KEY_CABINET_OPENAPI_ERROR, String.valueOf(res.get(RESULT_MESSAGE)));
+        }
+        return JSONArray.parseArray(res.getJSONObject(RESULT_DATA).toJSONString(), KeyCabinetResDTO.class);
     }
 
     @Override

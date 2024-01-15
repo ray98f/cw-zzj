@@ -18,5 +18,9 @@ public class AttendQuitReqDTO {
     private Integer alcoholTest;
     private String alcoholTestStatus;
     private Double alcoholResult;
+    /**
+     * 钥匙柜信息
+     */
+    private String keyCabinet;
 
 }

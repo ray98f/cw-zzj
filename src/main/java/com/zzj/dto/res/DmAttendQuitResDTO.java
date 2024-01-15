@@ -30,6 +30,11 @@ public class DmAttendQuitResDTO {
     )
     private Date actionTime;
 
+    /**
+     * 钥匙柜
+     */
+    private String keyCabinetName;
+
 
 
 

@@ -103,9 +103,8 @@ logging:
 excluded:
   pages: /zzj/index,/zzj/login,/zzj/logout,/zzj/index.html,/zzj/favicon.ico,/zzj/login.html,/zzj/duty.html,/zzj/duty_result.html,/zzj/three.html,/zzj/off_duty.html,/zzj/off_result.html,/zzj/off_order.html,/zzj/order_result.html,/zzj/faceBind.html,/zzj/ipAdd,/zzj/user/faceCompare,/zzj/user/featureList,/zzj/userCardSync
 
-keyBox:
-  auth-url: http://www.keybox21.com:9032/api/login/logintoken
-  record-url: http://www.keybox21.com:9032/api/keyrecords/records_query
-  user-name: admin
-  user-pwd: 123456
-  user-dept: 10000000000000000
+key-cabinet:
+  base-url: http://www.keybox21.com:9032/api
+  name: admin
+  pwd: 123456
+  dept: 10000000000000000

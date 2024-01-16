@@ -190,7 +190,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         er.setUserId(currentLoginUser.getUserId());
         er.setReCount(examList.length);
         er.setReCountError(errCount);
-        er.setRePercent(Math.round((float) (((examList.length - errCount) * 100) / examList.length)) / 100.0);
+        er.setRePercent((double) (((examList.length - errCount) * 100) / examList.length));
 
         try {
             Integer result = dmUserAccountMapper.addRecord(er);

@@ -17,12 +17,7 @@ public interface EipUserAccountMapper {
 
     SystemUserResDTO getUserByCard(String userName);
 
-    SystemUserResDTO getUserByFinger(String userName);
-
     UserAccountDetailResDTO getUserDetail(Integer userId);
-
-    Integer getPassRecordCount(Integer userId);
-
     @SqlParser(filter = true)
     List<ExamResDTO> getExamList();
 

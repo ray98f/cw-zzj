@@ -38,14 +38,6 @@
         WHERE t2.USER_ID  = #{userId} AND t2.IS_DELETED =0
     </select>
 
-    <select id="getExamConfig" resultType="com.zzj.dto.res.UserPositionResDTO">
-        SELECT
-        t1.id AS positionId,t1.name AS positionName,t1.CODE AS positionCode
-        FROM IAM_POSITION t1
-        LEFT JOIN IAM_USER_POSITION t2 ON t2.POSITION_ID = t1.ID
-        WHERE t2.USER_ID  = #{userId} AND t2.IS_DELETED =0
-    </select>
-
     <select id="getPassRecordCount" resultType="java.lang.Integer">
         SELECT
         COUNT(1)

@@ -73,8 +73,6 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     private final String[] CROSSING_ROAD_TYPE = new String[] {"指导司机", "司机长", "调车"};
 
-    private final String EARLY_CLASS_TYPE = "1";
-
     @Override
     public String getUser(UserLoginReqDTO userLoginReqDTO, HttpServletRequest request) {
         SystemUserResDTO user = null;
@@ -311,6 +309,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         List<DmAttendQuitResDTO> workList = dmUserAccountMapper.getAttendQuit(dutyInfo.getId(), currentLoginUser.getUserId(), (DateUtils.dutyTimeDetermine() ? 1 : 2));
         // 交路类型包含司机长、指导司机、调车且班次类型为早班  早班不出勤
         if (!Objects.isNull(dutyInfo.getCrossingRoadTypeName())) {
+            String EARLY_CLASS_TYPE = "1";
             if (Arrays.stream(CROSSING_ROAD_TYPE).anyMatch(type -> dutyInfo.getCrossingRoadTypeName().contains(type)) && EARLY_CLASS_TYPE.equals(dutyInfo.getClassType())) {
                 workList.add(new DmAttendQuitResDTO());
             }
@@ -480,7 +479,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         if (type == 1) {
             DmAttendQuitResDTO quitRes = dmUserAccountMapper.getQuit(currentLoginUser.getUserId());
             if (Objects.isNull(quitRes)) {
-                throw new CommonException(ErrorCode.RESOURCE_NOT_EXIST);
+                return "";
             }
             return quitRes.getKeyCabinetName();
         }

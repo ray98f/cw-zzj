@@ -139,16 +139,16 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
-     * 判断当前时间是否在0-1点之间
-     * @return 当前时间是否在0-1点之间
+     * 判断当前时间是否在0-2点之间
+     * @return 当前时间是否在0-2点之间
      */
     public static boolean dutyTimeDetermine() {
         // 当前时间
         LocalDateTime now = LocalDateTime.now();
         // 时间范围0点
         LocalTime start0 = LocalTime.of(0, 0);
-        // 时间范围1点
-        LocalTime end1 = LocalTime.of(1, 0);
+        // 时间范围2点
+        LocalTime end1 = LocalTime.of(2, 0);
         return (now.toLocalTime().isAfter(start0) && now.toLocalTime().isBefore(end1));
     }
 

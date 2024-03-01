@@ -184,7 +184,12 @@ public enum ErrorCode {
     /**
      * 钥匙柜外部接口错误
      */
-    KEY_CABINET_OPENAPI_ERROR(3200110, "key.cabinet.openapi.error");
+    KEY_CABINET_OPENAPI_ERROR(3200110, "key.cabinet.openapi.error"),
+
+    /**
+     * 乘务系统外部接口错误
+     */
+    OCM_OPENAPI_ERROR(3200111, "ocm.openapi.error");
 
 
 

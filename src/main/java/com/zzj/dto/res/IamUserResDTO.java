@@ -11,10 +11,14 @@ import lombok.Data;
 @ApiModel
 public class IamUserResDTO {
 
-    //用户ID
+    /**
+     * 用户ID
+     */
     private Long id;
 
-    @ApiModelProperty(value = "工号")
+    /**
+     * 工号
+     */
     private String userNum;
 
 

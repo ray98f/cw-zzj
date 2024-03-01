@@ -3,8 +3,9 @@ package com.zzj.service.impl;
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.extension.api.R;
 import com.zzj.constant.CommonConstants;
+import com.zzj.constant.KeyCabinetConstants;
+import com.zzj.constant.OcmConstants;
 import com.zzj.dto.req.*;
 import com.zzj.dto.res.*;
 import com.zzj.enums.ErrorCode;
@@ -27,12 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
-import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.zzj.constant.KeyCabinetConstants.*;
 
 /**
  * @author frp
@@ -42,6 +40,8 @@ import static com.zzj.constant.KeyCabinetConstants.*;
 @Transactional
 public class UserAccountServiceImpl implements UserAccountService {
 
+    @Value("${ocm.base-url}")
+    private String ocmBaseUrl;
     @Value("${key-cabinet.base-url}")
     private String keyCabinetBaseUrl;
 
@@ -453,6 +453,7 @@ public class UserAccountServiceImpl implements UserAccountService {
                 }
                 dmUserAccountMapper.addOrderDetail(reqList, orderInfo.getId());
             }
+            sendOrderToOsm(orderInfo);
         } catch (Exception e) {
             throw new CommonException(ErrorCode.INSERT_ERROR);
         }
@@ -503,11 +504,11 @@ public class UserAccountServiceImpl implements UserAccountService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("name", keyCabinetName);
         jsonObject.put("Psw", keyCabinetPwd);
-        JSONObject res = restTemplate.postForEntity(keyCabinetBaseUrl + GET_TOKEN_URL, jsonObject, JSONObject.class).getBody();
-        if (!RESULT_CODE_SUCCESS.equals(Objects.requireNonNull(res).getString(RESULT_CODE))) {
-            throw new CommonException(ErrorCode.KEY_CABINET_OPENAPI_ERROR, String.valueOf(res.get(RESULT_MESSAGE)));
+        JSONObject res = restTemplate.postForEntity(keyCabinetBaseUrl + KeyCabinetConstants.GET_TOKEN_URL, jsonObject, JSONObject.class).getBody();
+        if (!KeyCabinetConstants.RESULT_CODE_SUCCESS.equals(Objects.requireNonNull(res).getString(KeyCabinetConstants.RESULT_CODE))) {
+            throw new CommonException(ErrorCode.KEY_CABINET_OPENAPI_ERROR, String.valueOf(res.get(KeyCabinetConstants.RESULT_MESSAGE)));
         }
-        return res.getJSONObject(RESULT_DATA).getString(ACCESS_TOKEN);
+        return res.getJSONObject(KeyCabinetConstants.RESULT_DATA).getString(KeyCabinetConstants.ACCESS_TOKEN);
     }
 
     /**
@@ -521,7 +522,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.valueOf("application/json;UTF-8"));
         headers.add("Authorization", "Bearer " + token);
-        String url = keyCabinetBaseUrl + GET_KEY_RECORDS_URL;
+        String url = keyCabinetBaseUrl + KeyCabinetConstants.GET_KEY_RECORDS_URL;
         JSONObject params = new JSONObject();
         params.put("DepartmentId", keyCabinetDept);
         params.put("UserNumber", userNo);
@@ -533,10 +534,33 @@ public class UserAccountServiceImpl implements UserAccountService {
         params.put("PageSize", 50);
         HttpEntity<String> strEntity = new HttpEntity<>(params.toJSONString(), headers);
         JSONObject res = restTemplate.postForObject(url, strEntity, JSONObject.class);
-        if (!RESULT_CODE_SUCCESS.equals(Objects.requireNonNull(res).getString(RESULT_CODE))) {
-            throw new CommonException(ErrorCode.KEY_CABINET_OPENAPI_ERROR, String.valueOf(res.get(RESULT_MESSAGE)));
+        if (!KeyCabinetConstants.RESULT_CODE_SUCCESS.equals(Objects.requireNonNull(res).getString(KeyCabinetConstants.RESULT_CODE))) {
+            throw new CommonException(ErrorCode.KEY_CABINET_OPENAPI_ERROR, String.valueOf(res.get(KeyCabinetConstants.RESULT_MESSAGE)));
         }
-        return JSONArray.parseArray(res.getJSONObject(RESULT_DATA).toJSONString(), KeyCabinetResDTO.class);
+        return JSONArray.parseArray(res.getJSONObject(KeyCabinetConstants.RESULT_DATA).toJSONString(), KeyCabinetResDTO.class);
+    }
+
+    /**
+     * 保单信息推送乘务系统
+     * @param orderInfo 报单信息
+     */
+    private void sendOrderToOsm(OrderReqDTO orderInfo) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("driverInfoId", orderInfo.getId());
+        jsonObject.put("kilometers", orderInfo.getKilometer());
+        jsonObject.put("time", orderInfo.getDate());
+        jsonObject.put("driverId", orderInfo.getUserId());
+        UserAccountDetailResDTO user = dmUserAccountMapper.getUserDetail(orderInfo.getDriverId());
+        if (!Objects.isNull(user)) {
+            jsonObject.put("name", user.getUserViewName());
+        } else {
+            jsonObject.put("name", "");
+        }
+        jsonObject.put("jobNumber", orderInfo.getDriverId());
+        JSONObject res = restTemplate.postForEntity(ocmBaseUrl + OcmConstants.DRIVER_REPORT_RECEIVE_URL, jsonObject, JSONObject.class).getBody();
+        if (!OcmConstants.RESULT_CODE_SUCCESS.equals(Objects.requireNonNull(res).getString(OcmConstants.RESULT_CODE))) {
+            throw new CommonException(ErrorCode.OCM_OPENAPI_ERROR, String.valueOf(res.get(OcmConstants.RESULT_MSG)));
+        }
     }
 
     @Override

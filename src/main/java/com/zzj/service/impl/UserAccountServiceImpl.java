@@ -3,9 +3,12 @@ package com.zzj.service.impl;
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.pagehelper.page.PageMethod;
 import com.zzj.constant.CommonConstants;
 import com.zzj.constant.KeyCabinetConstants;
 import com.zzj.constant.OcmConstants;
+import com.zzj.dto.PageReqDTO;
 import com.zzj.dto.req.*;
 import com.zzj.dto.res.*;
 import com.zzj.enums.ErrorCode;
@@ -473,26 +476,26 @@ public class UserAccountServiceImpl implements UserAccountService {
      * @return 钥匙柜信息
      */
     public String getKeyCabinet(CurrentLoginUser currentLoginUser, String offTime, Integer type, String day) {
-        String token = getToken();
-        if (com.zzj.utils.StringUtils.isEmpty(offTime)) {
-            return "";
-        }
-        if (type == 1) {
-            DmAttendQuitResDTO quitRes = dmUserAccountMapper.getQuit(currentLoginUser.getUserId());
-            if (Objects.isNull(quitRes)) {
-                return "";
-            }
-            return quitRes.getKeyCabinetName();
-        }
-        if (type == 2) {
-            String startTime = day + " " + DateUtils.timeChange(offTime);
-            List<KeyCabinetResDTO> list = getKeyCabinetRecords(token, startTime, currentLoginUser.getPersonNo());
-            if (com.zzj.utils.StringUtils.isNotEmpty(list)) {
-                // todo 处理钥匙取还记录信息
-                list = list.stream().sorted(Comparator.comparing(KeyCabinetResDTO::getDoorCloseTime).reversed()).collect(Collectors.toList());
-                return String.valueOf(list.get(0).getBoxNumber());
-            }
-        }
+//        String token = getToken();
+//        if (com.zzj.utils.StringUtils.isEmpty(offTime)) {
+//            return "";
+//        }
+//        if (type == 1) {
+//            DmAttendQuitResDTO quitRes = dmUserAccountMapper.getQuit(currentLoginUser.getUserId());
+//            if (Objects.isNull(quitRes)) {
+//                return "";
+//            }
+//            return quitRes.getKeyCabinetName();
+//        }
+//        if (type == 2) {
+//            String startTime = day + " " + DateUtils.timeChange(offTime);
+//            List<KeyCabinetResDTO> list = getKeyCabinetRecords(token, startTime, currentLoginUser.getPersonNo());
+//            if (com.zzj.utils.StringUtils.isNotEmpty(list)) {
+//                // todo 处理钥匙取还记录信息
+//                list = list.stream().sorted(Comparator.comparing(KeyCabinetResDTO::getDoorCloseTime).reversed()).collect(Collectors.toList());
+//                return String.valueOf(list.get(0).getBoxNumber());
+//            }
+//        }
         return "";
     }
 
@@ -581,6 +584,25 @@ public class UserAccountServiceImpl implements UserAccountService {
         } catch (Exception e) {
             throw new CommonException(ErrorCode.INSERT_ERROR);
         }
+    }
+
+    @Override
+    public String keyCabinetTest(CurrentLoginUser currentLoginUser, String offTime, Integer type, String day) {
+        return getKeyCabinet(currentLoginUser, offTime, type, day);
+    }
+
+    @Override
+    public Page<ScreenResDTO> screen(PageReqDTO pageReqDTO) {
+        PageMethod.startPage(pageReqDTO.getPageNo(), pageReqDTO.getPageSize());
+        int classType;
+        if (DateUtils.dutyTimeDetermine(0, 7)) {
+            classType = 1;
+        } else if (DateUtils.dutyTimeDetermine(7, 15)) {
+            classType = 2;
+        } else {
+            classType = 3;
+        }
+        return dmUserAccountMapper.screen(pageReqDTO.of(), classType);
     }
 
     private SystemUserResDTO loginByPwd(UserLoginReqDTO userLoginReqDTO) {

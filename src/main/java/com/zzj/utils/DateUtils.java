@@ -153,6 +153,20 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
+     * 判断当前时间是否在时间范围之间
+     * @return 当前时间是否在时间范围之间
+     */
+    public static boolean dutyTimeDetermine(Integer start, Integer end) {
+        // 当前时间
+        LocalDateTime now = LocalDateTime.now();
+        // 时间范围0点
+        LocalTime start0 = LocalTime.of(start, 0);
+        // 时间范围2点
+        LocalTime end1 = LocalTime.of(end, 0);
+        return (now.toLocalTime().isAfter(start0) && now.toLocalTime().isBefore(end1));
+    }
+
+    /**
      * 获取今天日期
      * @return 日期
      */

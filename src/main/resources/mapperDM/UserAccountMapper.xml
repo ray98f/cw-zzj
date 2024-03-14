@@ -465,4 +465,45 @@
         FACE_FLAG = '1'
         where USER_NUM = #{userNo}
     </update>
+
+    <select id="screen" resultType="com.zzj.dto.res.ScreenResDTO">
+        SELECT
+        t1.ID,
+        t1.NEW_DRIVER_INFO_ID,
+        u1.REALNAME AS DRIVER_NAME,
+        (case when TO_CHAR(q1.ACTION_TIME,'HH24MISS')>t2.ATTEND_TIME then 2 else 1 end) DRIVER_FLAG,
+        t1.ASSISTANT_DRIVER_ID,
+        u2.REALNAME AS ASSISTANT_DRIVER_NAME,
+        (case when TO_CHAR(q2.ACTION_TIME,'HH24MISS')>t2.ATTEND_TIME then 2 else 1 end) ASSISTANT_DRIVER_FLAG,
+        t1.STUDENT_DRIVER_ID,
+        u3.REALNAME AS STUDENT_DRIVER_NAME,
+        (case when TO_CHAR(q3.ACTION_TIME,'HH24MISS')>t2.ATTEND_TIME then 2 else 1 end) STUDENT_DRIVER_FLAG,
+        t1.NEW_CROSSINGROAD_ID as crId,
+        t2.CROSSINGROAD_NAME as crName,
+        t2.ATTEND_TIME as attentime,
+        t2.QUIT_TIME as offtime,
+        t5.id AS line_id,
+        t5.linename AS line_name，
+        t7.STATION_NAME as attenplace,
+        tn.TRAIN_NAME,
+        tn.TRAIN_NUMBER_TYPE
+        FROM NEW_SCHEDULING t1
+        LEFT JOIN NEW_CROSSINGROAD t2 ON t1.NEW_CROSSINGROAD_ID = t2.ID
+        LEFT JOIN NEW_CLASS_TABLE t8 on t1.NEW_CLASS_TABLE_ID = t8.ID
+        LEFT JOIN NEW_CROSSINGROAD_TABLE t3 ON t2.NEW_CROSSINGROAD_TABLE_ID = t3.ID
+        LEFT JOIN NEW_TIME_TABLE t4 ON t4.ID = t3.NEW_TIME_TABLE_ID and t4.IS_DELETED=0
+        LEFT JOIN LINE t5 ON t5.ID  = t4.LINE_ID
+        LEFT JOIN STATIONS t7 on t7.ID = t2.ATTEND_LOCATION
+        LEFT JOIN CROSSINGROADTYPE t9 on t9.ID=t2.CROSSINGROADTYPE_ID and t9.IS_DELETED=0
+        LEFT JOIN NEW_DRIVER_ATTEND_QUIT q1 on t1.ID=q1.NEW_SCHEDULING_ID and q1.CLOCK_IN_USER=t1.NEW_DRIVER_INFO_ID and q1.WORK_TYPE=1 and ROWNUM=1
+        LEFT JOIN NEW_DRIVER_ATTEND_QUIT q2 on t1.ID=q2.NEW_SCHEDULING_ID and q2.CLOCK_IN_USER=t1.ASSISTANT_DRIVER_ID and q2.WORK_TYPE=1 and ROWNUM=1
+        LEFT JOIN NEW_DRIVER_ATTEND_QUIT q3 on t1.ID=q3.NEW_SCHEDULING_ID and q3.CLOCK_IN_USER=t1.STUDENT_DRIVER_ID and q3.WORK_TYPE=1 and ROWNUM=1
+        LEFT JOIN NEW_TRAIN_NUMBER tn on tn.ID=t2.ATTEND_TRAIN_NUMBER
+        LEFT JOIN IAM_USER u1 ON u1.ID=t1.NEW_DRIVER_INFO_ID
+        LEFT JOIN IAM_USER u2 ON u2.ID=t1.ASSISTANT_DRIVER_ID
+        LEFT JOIN IAM_USER u3 ON u3.ID=t1.STUDENT_DRIVER_ID
+        WHERE trunc(t1.ARRANGE_DATE)=trunc(sysdate) AND t1.is_deleted=0 and t8.AUDIT_STATUS=2
+        and t2.CLASS_TYPE=#{classType} AND t4.LINE_ID is not null
+        ORDER BY t2.ORDER_NO ASC
+    </select>
 </mapper>

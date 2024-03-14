@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zzj.annotation.CurrUser;
 import com.zzj.constant.CommonConstants;
 import com.zzj.dto.DataResponse;
+import com.zzj.dto.PageReqDTO;
+import com.zzj.dto.PageResponse;
 import com.zzj.dto.req.AttendQuitReqDTO;
 import com.zzj.dto.req.ExamRecordReqDTO;
 import com.zzj.dto.req.OrderReqDTO;
@@ -21,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -155,5 +158,23 @@ public class UserAccountController {
         return DataResponse.of(userAccountService.faceRegister(currentLoginUser,list));
     }
 
+    @GetMapping("/keyCabinetTest")
+    public DataResponse<String> keyCabinetTest(@RequestParam String offTime,
+                                               @RequestParam Integer type,
+                                               @RequestParam String day,
+                                               @CurrUser CurrentLoginUser currentLoginUser) {
+        return DataResponse.of(userAccountService.keyCabinetTest(currentLoginUser, offTime, type, day));
+    }
+
+    /**
+     * 大屏接口
+     * @param pageReqDTO 分页参数
+     * @return 大屏信息
+     */
+    @GetMapping("/screen/list")
+    @ApiOperation(value = "大屏接口")
+    public PageResponse<ScreenResDTO> screen(@Valid PageReqDTO pageReqDTO) {
+        return PageResponse.of(userAccountService.screen(pageReqDTO));
+    }
 
 }

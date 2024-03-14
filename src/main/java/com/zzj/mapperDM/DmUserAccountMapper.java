@@ -1,5 +1,6 @@
 package com.zzj.mapperDM;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zzj.dto.req.*;
 import com.zzj.dto.res.*;
 import org.apache.ibatis.annotations.Mapper;
@@ -111,4 +112,12 @@ public interface DmUserAccountMapper {
     Integer addUserFace(String userNo,List<String> faceList);
 
     Integer updateFace(String userNo);
+
+    /**
+     * 大屏接口
+     * @param page 分页参数
+     * @param classType 类型
+     * @return 大屏信息
+     */
+    Page<ScreenResDTO> screen(Page<ScreenResDTO> page, int classType);
 }

@@ -602,7 +602,15 @@ public class UserAccountServiceImpl implements UserAccountService {
         } else {
             classType = 3;
         }
-        return dmUserAccountMapper.screen(pageReqDTO.of(), classType);
+        Page<ScreenResDTO> page = dmUserAccountMapper.screen(pageReqDTO.of(), classType);
+        List<ScreenResDTO> list = page.getRecords();
+        if (com.zzj.utils.StringUtils.isNotEmpty(list)) {
+            for (ScreenResDTO res : list) {
+                res.setAttentime(DateUtils.timeChange(res.getAttentime()));
+            }
+        }
+        page.setRecords(list);
+        return page;
     }
 
     private SystemUserResDTO loginByPwd(UserLoginReqDTO userLoginReqDTO) {

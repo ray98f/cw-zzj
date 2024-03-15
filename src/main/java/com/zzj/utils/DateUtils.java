@@ -1,5 +1,6 @@
 package com.zzj.utils;
 
+import com.zzj.constant.CommonConstants;
 import org.apache.commons.lang3.time.DateFormatUtils;
 
 import java.lang.management.ManagementFactory;
@@ -196,7 +197,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     public static String timeChange(String timeNum) {
         String timeStr = String.format("%06d", Integer.parseInt(timeNum));
         String newTimeStr = "";
-        if (timeStr.length() == 6) {
+        if (timeStr.length() == CommonConstants.SIX) {
             newTimeStr += timeStr.substring(0, 2) + ":";
             newTimeStr += timeStr.substring(2, 4) + ":";
             newTimeStr += timeStr.substring(4, 6);

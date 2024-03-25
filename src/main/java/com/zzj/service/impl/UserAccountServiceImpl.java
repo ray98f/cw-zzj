@@ -3,6 +3,7 @@ package com.zzj.service.impl;
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.pagehelper.page.PageMethod;
 import com.zzj.constant.CommonConstants;
@@ -458,6 +459,7 @@ public class UserAccountServiceImpl implements UserAccountService {
             }
             sendOrderToOsm(orderInfo);
         } catch (Exception e) {
+            log.error("exception message", e);
             throw new CommonException(ErrorCode.INSERT_ERROR);
         }
     }
@@ -551,7 +553,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("driverInfoId", orderInfo.getId());
         jsonObject.put("kilometers", orderInfo.getKilometer());
-        jsonObject.put("time", orderInfo.getDate());
+        jsonObject.put("time", orderInfo.getDate() + " 00:00:00");
         jsonObject.put("driverId", orderInfo.getUserId());
         UserAccountDetailResDTO user = dmUserAccountMapper.getUserDetail(orderInfo.getDriverId());
         if (!Objects.isNull(user)) {
@@ -561,6 +563,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         }
         jsonObject.put("jobNumber", orderInfo.getDriverId());
         JSONObject res = restTemplate.postForEntity(ocmBaseUrl + OcmConstants.DRIVER_REPORT_RECEIVE_URL, jsonObject, JSONObject.class).getBody();
+        log.info(JSONObject.toJSONString(res));
         if (!OcmConstants.RESULT_CODE_SUCCESS.equals(Objects.requireNonNull(res).getString(OcmConstants.RESULT_CODE))) {
             throw new CommonException(ErrorCode.OCM_OPENAPI_ERROR, String.valueOf(res.get(OcmConstants.RESULT_MSG)));
         }

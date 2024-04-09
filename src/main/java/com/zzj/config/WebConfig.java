@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -15,6 +16,8 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.RejectedExecutionHandler;
 
 /**
  * 配置类
@@ -114,5 +117,28 @@ public class WebConfig extends WebMvcConfigurationSupport {
             String[] resources = r.getResourceLocations().split(REGEX);
             registry.addResourceHandler(paths).addResourceLocations(resources);
         });
+    }
+
+    @Bean(name = "asyncAPIExecutor")
+    public ThreadPoolTaskExecutor asyncResponseExecutor() {
+        return buildExecutor(20, 20, 2000, "asyncResponseExecutor-", null);
+    }
+
+    private ThreadPoolTaskExecutor buildExecutor(int corePoolSize,
+                                                 int maxPoolSize,
+                                                 int queueCapacity,
+                                                 String name, RejectedExecutionHandler rejectedExecutionHandler) {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        if (Objects.nonNull(rejectedExecutionHandler)) {
+            executor.setRejectedExecutionHandler(rejectedExecutionHandler);
+        }
+        executor.setCorePoolSize(corePoolSize);
+        executor.setMaxPoolSize(maxPoolSize);
+        executor.setQueueCapacity(queueCapacity);
+        executor.setKeepAliveSeconds(30);
+        executor.setThreadNamePrefix(name);
+        executor.setAllowCoreThreadTimeOut(true);
+        executor.initialize();
+        return executor;
     }
 }

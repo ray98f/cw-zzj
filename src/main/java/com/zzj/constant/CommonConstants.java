@@ -9,6 +9,10 @@ package com.zzj.constant;
  */
 public interface CommonConstants {
 
+     String COMMA = ",";
+
+     String UNKNOWN = "unknown";
+
     /**
      * 删除
      */

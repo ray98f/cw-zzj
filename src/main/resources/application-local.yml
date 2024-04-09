@@ -101,7 +101,7 @@ logging:
     path: ./log
 
 excluded:
-  pages: /zzj/index,/zzj/login,/zzj/logout,/zzj/index.html,/zzj/favicon.ico,/zzj/login.html,/zzj/duty.html,/zzj/duty_result.html,/zzj/three.html,/zzj/off_duty.html,/zzj/off_result.html,/zzj/off_order.html,/zzj/order_result.html,/zzj/faceBind.html,/zzj/ipAdd,/zzj/user/faceCompare,/zzj/user/featureList,/zzj/userCardSync,/zzj/user/screen/list
+  pages: /zzj/index,/zzj/login,/zzj/logout,/zzj/index.html,/zzj/favicon.ico,/zzj/login.html,/zzj/duty.html,/zzj/duty_result.html,/zzj/three.html,/zzj/off_duty.html,/zzj/off_result.html,/zzj/off_order.html,/zzj/order_result.html,/zzj/faceBind.html,/zzj/ipAdd,/zzj/user/faceCompare,/zzj/user/featureList,/zzj/userCardSync,/zzj/user/screen/list,/zzj/kq,/zzj/jx
 
 ocm:
   base-url: http://10.11.82.27:83/crew-admin/api

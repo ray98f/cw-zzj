@@ -42,12 +42,17 @@ public class CommonServiceImpl implements CommonService {
 
     @Value("${open-opi.kq.nodm}")
     private String kqNodm;
+    @Value("${open-opi.kq.nosm}")
+    private String kqNosm;
 
     @Value("${open-opi.jx.nocm}")
     private String jxNocm;
 
     @Value("${open-opi.jx.nodm}")
     private String jxNodm;
+
+    @Value("${open-opi.jx.nosm}")
+    private String jxNosm;
 
     @Override
     @SneakyThrows
@@ -57,11 +62,14 @@ public class CommonServiceImpl implements CommonService {
                 apiExecutor);
         CompletableFuture<List<KQResDTO>> task2 = CompletableFuture.supplyAsync(() -> callKq(kqNodm,date),
                 apiExecutor);
+        CompletableFuture<List<KQResDTO>> task3 = CompletableFuture.supplyAsync(() -> callKq(kqNosm,date),
+                apiExecutor);
 
         CompletableFuture<Void> allOf = CompletableFuture.allOf(task1, task2);
         allOf.get();
         kqList.addAll(task1.get());
         kqList.addAll(task2.get());
+        kqList.addAll(task3.get());
         return kqList;
     }
 
@@ -74,23 +82,31 @@ public class CommonServiceImpl implements CommonService {
                 apiExecutor);
         CompletableFuture<JXResDTO> task2 = CompletableFuture.supplyAsync(() -> callJx(jxNodm),
                 apiExecutor);
+        CompletableFuture<JXResDTO> task3 = CompletableFuture.supplyAsync(() -> callJx(jxNosm),
+                apiExecutor);
         CompletableFuture<Void> allOf = CompletableFuture.allOf(task1, task2);
         allOf.get();
 
         List<JXMonthResDTO> jxMonth =new ArrayList<>();
         List<JXYearResDTO> jxYear =new ArrayList<>();
-        if(task1.get().getMonthVoList() != null){
+        if(task1.get() != null && task1.get().getMonthVoList() != null){
             jxMonth.addAll(task1.get().getMonthVoList());
         }
-        if(task2.get().getMonthVoList() != null){
+        if(task2.get() != null && task2.get().getMonthVoList() != null){
             jxMonth.addAll(task2.get().getMonthVoList());
         }
+        if(task3.get() != null && task3.get().getMonthVoList() != null){
+            jxMonth.addAll(task3.get().getMonthVoList());
+        }
 
-        if(task1.get().getYearVoList() != null){
+        if(task1.get() != null && task1.get().getYearVoList() != null){
             jxYear.addAll(task1.get().getYearVoList());
         }
-        if(task2.get().getYearVoList() != null){
+        if(task2.get() != null && task2.get().getYearVoList() != null){
             jxYear.addAll(task2.get().getYearVoList());
+        }
+        if(task3.get() != null && task3.get().getYearVoList() != null){
+            jxYear.addAll(task3.get().getYearVoList());
         }
 
         jxRes.setMonthVoList(jxMonth);
@@ -104,19 +120,36 @@ public class CommonServiceImpl implements CommonService {
         }
         JSONObject res = JSONObject.parseObject(HttpUtils.doGet(url, null), JSONObject.class);
         String data = res.getString("data");
-        return JSONArray.parseArray(data, KQResDTO.class);
+        if(StringUtils.isNotEmpty(data)){
+            return JSONArray.parseArray(data, KQResDTO.class);
+        }
+        return null;
     }
 
     private JXResDTO callJx(String url){
         JSONObject res = JSONObject.parseObject(HttpUtils.doGet(url, null), JSONObject.class);
-        JSONObject data = JSONObject.parseObject(res.getString("data").toString(), JSONObject.class);
-        String monthVoList = data.getString("monthVoList");
-        String yearVoList = data.getString("yearVoList");
-        List<JXMonthResDTO> monthList = JSONArray.parseArray(monthVoList, JXMonthResDTO.class);
-        List<JXYearResDTO> yearList = JSONArray.parseArray(yearVoList, JXYearResDTO.class);
-        JXResDTO jxRes = new JXResDTO();
-        jxRes.setMonthVoList(monthList);
-        jxRes.setYearVoList(yearList);
-        return jxRes;
+        if(StringUtils.isNotEmpty(res.getString("data")) && StringUtils.isNotEmpty(res.getString("data").replace("[","").replace("]",""))){
+            JSONObject data = JSONObject.parseObject(res.getString("data").toString(), JSONObject.class);
+            if(data != null){
+                String monthVoList = data.getString("monthVoList");
+                String yearVoList = data.getString("yearVoList");
+                List<JXMonthResDTO> monthList = new ArrayList<>();
+                List<JXYearResDTO> yearList = new ArrayList<>();
+                if(StringUtils.isNotEmpty(monthVoList)){
+                    monthList = JSONArray.parseArray(monthVoList, JXMonthResDTO.class);
+                }
+                if(StringUtils.isNotEmpty(yearVoList)){
+                    yearList = JSONArray.parseArray(yearVoList, JXYearResDTO.class);
+                }
+
+                JXResDTO jxRes = new JXResDTO();
+                jxRes.setMonthVoList(monthList);
+                jxRes.setYearVoList(yearList);
+                return jxRes;
+            }
+            return null;
+        }
+
+        return null;
     }
 }

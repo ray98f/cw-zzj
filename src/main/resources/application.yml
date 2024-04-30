@@ -6,7 +6,7 @@ server:
     context-path: /zzj
 spring:
   profiles:
-    active: dev
+    active: prod
   messages:
     basename: i18n/messages
   application:

@@ -115,11 +115,9 @@ key-cabinet:
 open-opi:
   kq:
     nocm: http://nocm.wzmtr.com:2443/crew-admin/api/share/attendanceReport
-    nodm: http://10.11.82.27:8181/api/staSchDutyPlan/anon/attendanceReport
-    nosm: http://10.11.82.27:8181/api/staSchDutyPlan/anon/attendanceReport
-    notm: http://10.11.82.27:8181/api/staSchDutyPlan/anon/attendanceReport
+    nodm: http://xd.wzmtr.com:8085/api/staSchDutyPlan/anon/attendanceReport
+    nosm: http://zw.wzmtr.com:8085/api/staSchDutyPlan/anon/thirdPartyQuery
   jx:
     nocm: http://nocm.wzmtr.com:2443/crew-admin/api/share/performanceAppraisal
-    nodm: http://10.11.82.27:8181/api/perYear/anon/performanceAppraisal
-    nosm: http://10.11.82.27:8181/api/staSchDutyPlan/anon/attendanceReport
-    notm: http://10.11.82.27:8181/api/staSchDutyPlan/anon/attendanceReport
+    nodm: http://xd.wzmtr.com:8085/api/perYear/anon/performanceAppraisal
+    nosm: http://zw.wzmtr.com:8085/api/PfmApi/monthAndYear

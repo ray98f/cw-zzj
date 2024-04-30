@@ -49,19 +49,24 @@
     </select>
 
     <select id="getExamList" resultType="com.zzj.dto.res.ExamResDTO">
-        select e.*,et.EXAMTYPE_NAME AS EXAM_TYPE_NAME from (select
-        exam_id,exam_text,option_a,option_b,option_c,option_d,option_e,option_f,answer_correct,EXAM_TYPE
-        from exam sample(10)
-        where #{rowCount}>rownum) e
+        select * from
+        (select e.exam_id,e.exam_text,e.option_a,e.option_b,e.option_c,e.option_d,e.option_e,e.option_f,
+        e.answer_correct,e.EXAM_TYPE,et.EXAMTYPE_NAME AS EXAM_TYPE_NAME
+        from exam e
         left join EXAMTYPE et on e.EXAM_TYPE=et.EXAMTYPE_ID
+        ORDER BY DBMS_RANDOM.RANDOM())
+        where #{rowCount}>rownum
     </select>
 
     <select id="getExamByCnf" resultType="com.zzj.dto.res.ExamResDTO">
-        select e.*,et.EXAMTYPE_NAME AS EXAM_TYPE_NAME from (select
-        exam_id,exam_text,option_a,option_b,option_c,option_d,option_e,option_f,answer_correct,EXAM_TYPE
-        from exam sample(10)
-        where #{rowCount}>rownum and EXAM_TYPE=#{typeId}) e
+        select * from
+        (select e.exam_id,e.exam_text,e.option_a,e.option_b,e.option_c,e.option_d,e.option_e,e.option_f,
+        e.answer_correct,e.EXAM_TYPE,et.EXAMTYPE_NAME AS EXAM_TYPE_NAME
+        from exam e
         left join EXAMTYPE et on e.EXAM_TYPE=et.EXAMTYPE_ID
+        where e.EXAM_TYPE=#{typeId}
+        ORDER BY DBMS_RANDOM.RANDOM())
+        where #{rowCount}>rownum
     </select>
 
     <select id="getExamConf" resultType="com.zzj.dto.res.ExamConfigDetailResDTO">

@@ -24,6 +24,15 @@ spring:
         resourceLocations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,classpath:/templates/
 
   datasource:
+    #是否在自动回收超时连接的时候打印连接的超时错误
+    log-abandoned: true
+    #是否自动回收超时连接
+    remove-abandoned: true
+    #超时时间(以秒数为单位)
+    remove-abandoned-timeout: 180
+    #检测数据库的查询语句
+    validation-query: select 1 from dual
+    test-on-borrow: true
     zzj1:
       driver-class-name: oracle.jdbc.OracleDriver
       jdbc-url: jdbc:oracle:thin:@192.168.30.152:1522:XE

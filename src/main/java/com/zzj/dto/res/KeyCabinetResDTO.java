@@ -1,40 +1,114 @@
 package com.zzj.dto.res;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import java.util.Date;
-
 /**
- * @author zx
+ * 钥匙取还记录信息类（外部提供）
+ * @author  Ray
+ * @version 1.0
+ * @date 2024/01/12
  */
 @Data
-@ApiModel
 public class KeyCabinetResDTO {
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING)
-    @ApiModelProperty(value = "ID")
-    private Long keyId;
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING)
-    @ApiModelProperty(value = "钥匙柜ID")
-    private Long boxId;
-
-    @ApiModelProperty(value = "钥匙编号")
-    private String latticeCode;
-
-    @ApiModelProperty(value = "展示名称")
-    private String latticeName;
-
-    @ApiModelProperty(value = "钥匙状态")
-    private String latticeStatus;
-
-    @ApiModelProperty(value = "钥匙柜编号")
-    private String keyCabinetCode;
-
-    @ApiModelProperty(value = "钥匙柜名称")
-    private String keyCabinetName;
+    /**
+     * 唯一ID
+     */
+    private String ID;
+    /**
+     * 终端机编号
+     */
+    private Integer TerminalNumber;
+    /**
+     * 钥匙柜编号
+     */
+    private Integer BoxNumber;
+    /**
+     * 钥匙编号
+     */
+    private Integer KeyNumber;
+    /**
+     * 钥匙ID
+     */
+    private String KeyId;
+    /**
+     * 钥匙名称
+     */
+    private String KeyName;
+    /**
+     * 钥匙卡号
+     */
+    private String KeyCard;
+    /**
+     * 取钥匙时间
+     */
+    private String TakeKeyTime;
+    /**
+     * 取钥匙人员编号
+     */
+    private String TakeUserNumber;
+    /**
+     * 取钥匙人员名称
+     */
+    private String TakeUserName;
+    /**
+     * 取钥匙辅助认证人员名称
+     */
+    private String TakeAuxUserName;
+    /**
+     * 取钥匙的唯一ID
+     */
+    private String KeyTakeRecordID;
+    /**
+     * 还钥匙时间
+     */
+    private String ReturnKeyTime;
+    /**
+     * 还钥匙人员编号
+     */
+    private String ReturnUserNumber;
+    /**
+     * 还钥匙人员名称
+     */
+    private String ReturnUserName;
+    /**
+     * 还钥匙辅助认证人员名称
+     */
+    private String ReturnAuxUserName;
+    /**
+     * 是否关门超时  0-否，1-是
+     */
+    private Boolean overTimeCloseDoor;
+    /**
+     * 开门时间
+     */
+    private String doorOpenTime;
+    /**
+     * 关门时间
+     */
+    private String doorCloseTime;
+    /**
+     * 安卓端用取钥匙结果（0正常，1非法，2紧急）
+     */
+    private Integer recordType;
+    /**
+     * 钥匙是否归还 0-否，1-是
+     */
+    private Boolean returnFlag;
+    /**
+     * 是否超时归还  0-否，1-是
+     */
+    private Boolean overTimeReturn;
+    /**
+     * 部门id
+     */
+    private String DepartmentId;
+    /**
+     * Windows端取还状态（1正常，2非法）
+     */
+    private String State;
+    /**
+     * 备注
+     */
+    private String Remarks;
 
 }

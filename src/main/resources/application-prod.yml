@@ -24,6 +24,15 @@ spring:
         resourceLocations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,classpath:/templates/
 
   datasource:
+    #是否在自动回收超时连接的时候打印连接的超时错误
+    log-abandoned: true
+    #是否自动回收超时连接
+    remove-abandoned: true
+    #超时时间(以秒数为单位)
+    remove-abandoned-timeout: 180
+    #检测数据库的查询语句
+    validation-query: select 1 from dual
+    test-on-borrow: true
     zzj1:
       driver-class-name: oracle.jdbc.OracleDriver
       jdbc-url: jdbc:oracle:thin:@10.11.76.40:1521/gisdb
@@ -43,13 +52,6 @@ spring:
       jdbc-url: jdbc:oracle:thin:@10.11.76.40:1521/gisdb
       username: nocm
       password: nocm#202310
-      #      jdbc-url: jdbc:oracle:thin:@10.11.82.27:1521:XE
-      #      username: DBO
-      #      password: LchBnF5JmcQ3
-      #      driver-class-name: dm.jdbc.driver.DmDriver
-      #      jdbc-url: jdbc:dm://192.168.30.152:5236/DBO?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=utf-8
-      #      username: DBO
-      #      password: wht43s2MsokDmYfD
       hikari:
         read-only: false
         connection-timeout: 60000
@@ -101,11 +103,23 @@ logging:
     path: ./log
 
 excluded:
-  pages: /zzj/index,/zzj/login,/zzj/logout,/zzj/index.html,/zzj/favicon.ico,/zzj/login.html,/zzj/duty.html,/zzj/duty_result.html,/zzj/three.html,/zzj/off_duty.html,/zzj/off_result.html,/zzj/off_order.html,/zzj/order_result.html,/zzj/faceBind.html,/zzj/ipAdd,/zzj/user/faceCompare,/zzj/user/featureList,/zzj/userCardSync
+  pages: /zzj/index,/zzj/login,/zzj/logout,/zzj/index.html,/zzj/favicon.ico,/zzj/login.html,/zzj/duty.html,/zzj/duty_result.html,/zzj/three.html,/zzj/off_duty.html,/zzj/off_result.html,/zzj/off_order.html,/zzj/order_result.html,/zzj/faceBind.html,/zzj/ipAdd,/zzj/user/faceCompare,/zzj/user/featureList,/zzj/userCardSync,/zzj/user/screen/list,/zzj/kq,/zzj/jx
 
-keyBox:
-  auth-url: http://www.keybox21.com:9032/api/login/logintoken
-  record-url: http://www.keybox21.com:9032/api/keyrecords/records_query
-  user-name: admin
-  user-pwd: 123456
-  user-dept: 10000000000000000
+ocm:
+  base-url: http://nocm.wzmtr.com:2443/crew-admin/api
+key-cabinet:
+  base-url: http://www.keybox21.com:9032/api
+  name: admin
+  pwd: 123456
+  dept: 10000000000000000
+
+#乘务nocm、行车nodm、站务nosm、票务notm
+open-opi:
+  kq:
+    nocm: http://nocm.wzmtr.com:2443/crew-admin/api/share/attendanceReport
+    nodm: http://xd.wzmtr.com:8085/api/staSchDutyPlan/anon/attendanceReport
+    nosm: http://zw.wzmtr.com:8085/api/staSchDutyPlan/anon/thirdPartyQuery
+  jx:
+    nocm: http://nocm.wzmtr.com:2443/crew-admin/api/share/performanceAppraisal
+    nodm: http://xd.wzmtr.com:8085/api/perYear/anon/performanceAppraisal
+    nosm: http://zw.wzmtr.com:8085/api/PfmApi/monthAndYear

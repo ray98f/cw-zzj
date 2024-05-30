@@ -2,7 +2,10 @@ package com.zzj.controller;
 
 import com.zzj.constant.CommonConstants;
 import com.zzj.dto.DataResponse;
+import com.zzj.dto.JXResDTO;
+import com.zzj.dto.KQResDTO;
 import com.zzj.dto.req.UserLoginReqDTO;
+import com.zzj.service.CommonService;
 import com.zzj.service.UserAccountService;
 import com.zzj.utils.IpUtils;
 import io.swagger.annotations.Api;
@@ -14,6 +17,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * description:
@@ -32,6 +36,8 @@ public class CommonController {
     @Autowired
     private UserAccountService userAccountService;
 
+    @Autowired
+    private CommonService commonService;
 
     @ApiOperation(value = "登出")
     @GetMapping(value = "/logout")
@@ -63,5 +69,17 @@ public class CommonController {
     public DataResponse<String> getIP(HttpServletRequest httpServletRequest) {
         String ipAddress = IpUtils.getIpAddr(httpServletRequest);
         return DataResponse.of(ipAddress);
+    }
+
+    @ApiOperation(value = "考勤汇总")
+    @GetMapping(value = "/kq")
+    public DataResponse<List<KQResDTO>> kq(@RequestParam(required = false) String date) {
+        return DataResponse.of(commonService.queryKq(date));
+    }
+
+    @ApiOperation(value = "绩效汇总")
+    @GetMapping(value = "/jx")
+    public DataResponse<JXResDTO> jx() {
+        return DataResponse.of(commonService.queryJx());
     }
 }

@@ -38,14 +38,6 @@
         WHERE t2.USER_ID  = #{userId} AND t2.IS_DELETED =0
     </select>
 
-    <select id="getExamConfig" resultType="com.zzj.dto.res.UserPositionResDTO">
-        SELECT
-        t1.id AS positionId,t1.name AS positionName,t1.CODE AS positionCode
-        FROM IAM_POSITION t1
-        LEFT JOIN IAM_USER_POSITION t2 ON t2.POSITION_ID = t1.ID
-        WHERE t2.USER_ID  = #{userId} AND t2.IS_DELETED =0
-    </select>
-
     <select id="getPassRecordCount" resultType="java.lang.Integer">
         SELECT
         COUNT(1)
@@ -57,19 +49,24 @@
     </select>
 
     <select id="getExamList" resultType="com.zzj.dto.res.ExamResDTO">
-        select e.*,et.EXAMTYPE_NAME AS EXAM_TYPE_NAME from (select
-        exam_id,exam_text,option_a,option_b,option_c,option_d,option_e,option_f,answer_correct,EXAM_TYPE
-        from exam sample(10)
-        where #{rowCount}>rownum) e
+        select * from
+        (select e.exam_id,e.exam_text,e.option_a,e.option_b,e.option_c,e.option_d,e.option_e,e.option_f,
+        e.answer_correct,e.EXAM_TYPE,et.EXAMTYPE_NAME AS EXAM_TYPE_NAME
+        from exam e
         left join EXAMTYPE et on e.EXAM_TYPE=et.EXAMTYPE_ID
+        ORDER BY DBMS_RANDOM.RANDOM())
+        where #{rowCount}>rownum
     </select>
 
     <select id="getExamByCnf" resultType="com.zzj.dto.res.ExamResDTO">
-        select e.*,et.EXAMTYPE_NAME AS EXAM_TYPE_NAME from (select
-        exam_id,exam_text,option_a,option_b,option_c,option_d,option_e,option_f,answer_correct,EXAM_TYPE
-        from exam sample(10)
-        where #{rowCount}>rownum and EXAM_TYPE=#{typeId}) e
+        select * from
+        (select e.exam_id,e.exam_text,e.option_a,e.option_b,e.option_c,e.option_d,e.option_e,e.option_f,
+        e.answer_correct,e.EXAM_TYPE,et.EXAMTYPE_NAME AS EXAM_TYPE_NAME
+        from exam e
         left join EXAMTYPE et on e.EXAM_TYPE=et.EXAMTYPE_ID
+        where e.EXAM_TYPE=#{typeId}
+        ORDER BY DBMS_RANDOM.RANDOM())
+        where #{rowCount}>rownum
     </select>
 
     <select id="getExamConf" resultType="com.zzj.dto.res.ExamConfigDetailResDTO">
@@ -157,10 +154,7 @@
     </select>
 
     <select id="getAttendQuit" resultType="com.zzj.dto.res.DmAttendQuitResDTO">
-        SELECT
-        ID,
-        WORK_TYPE,
-        ACTION_TIME
+        SELECT ID, WORK_TYPE, ACTION_TIME, KEY_CABINET_NAME
         FROM NEW_DRIVER_ATTEND_QUIT
         WHERE NEW_SCHEDULING_ID = #{crId} and DRIVER_ID=#{userId}
         <if test="type==1">
@@ -169,6 +163,13 @@
         <if test="type==2">
             and ACTION_TIME>=(TRUNC(SYSDATE) + INTERVAL '1' HOUR)
         </if>
+    </select>
+
+    <select id="getQuit" resultType="com.zzj.dto.res.DmAttendQuitResDTO">
+        SELECT ID, WORK_TYPE, ACTION_TIME, KEY_CABINET_NAME
+        FROM NEW_DRIVER_ATTEND_QUIT
+        WHERE DRIVER_ID=#{userId} and WORK_TYPE=2 and rownum=1
+        order by ACTION_TIME desc
     </select>
 
     <select id="listTrains" resultType="com.zzj.dto.res.TrainsResDTO">
@@ -262,94 +263,8 @@
         SELECT * FROM SYS_USER_FACE
     </select>
 
-    <select id="checkDutyInfo" resultType="com.zzj.dto.res.CheckDutyResDTO">
-        SELECT
-            t1.ID,
-            t1.NEW_CROSSINGROAD_ID as crId,
-            t1.NEW_CROSSINGROAD_NAME as crName,
-            t1.ARRANGE_DATE as recDate,
-            t1.NEW_DRIVER_INFO_ID,
-            t1.ASSISTANT_DRIVER_ID,
-            t2.USER_NUM AS NEW_DRIVER_NO,
-            t3.USER_NUM AS ASSISTANT_DRIVER_NO
-        FROM NEW_SCHEDULING t1
-        LEFT JOIN IAM_USER t2 ON t1.NEW_DRIVER_INFO_ID = t2.ID
-        LEFT JOIN IAM_USER t3 ON t1.ASSISTANT_DRIVER_ID  = t3.ID
-        WHERE trunc(t1.ARRANGE_DATE)=trunc(sysdate)  AND  t1.ID = #{ID}
-        AND (t1.NEW_DRIVER_INFO_ID = #{userId} OR t1.ASSISTANT_DRIVER_ID = #{userId})
-    </select>
-
-    <select id="checkDutyInfo" resultType="com.zzj.dto.res.UserKeyStoreRecordResDTO">
-        SELECT * FROM KEY_CABINET_LATTICE_RECORD WHERE IS_DELETED = 0 AND ( USER_ID = #{newDriverInfoId} OR USER_ID = #{assistantDriverId})
-        AND TO_CHAR(USE_TIME,'YYYY-MM-DD') = TO_CHAR(SYSDATE,'YYYY-MM-DD')
-    </select>
-
-    <!--
-        @ApiModelProperty(value = "ID")
-    private Long id;
-
-    @ApiModelProperty(value = "名字")
-    private Long latticeId;
-
-    @ApiModelProperty(value = "用户ID")
-    private Long userId;
-
-    @ApiModelProperty(value = "存储时间")
-    private Date useTime;
-
-    @ApiModelProperty(value = "排班ID")
-    private Long schedulingId;
-
-    @ApiModelProperty(value = "交路ID")
-    private Long crossingId;
-
-    @ApiModelProperty(value = "钥匙ID")
-    private Long cabinetId;
-    -->
-    <select id="getKeyRecord" resultType="com.zzj.dto.res.UserKeyStoreRecordResDTO">
-        SELECT t1.ID,t1.LATTICE_ID,t1.USER_ID,t1.USE_TIME,t1.scheduling_Id,t1.crossing_Id,t1.cabinet_Id,t2.KEY_CABINET_CODE,t3.LATTICE_CODE
-        from KEY_CABINET_LATTICE_RECORD t1
-        left join KEY_CABINET_INFORMATION t2 on t1.cabinet_Id = t2.id
-        left join KEY_CABINET_LATTICE t3 on t1.LATTICE_ID = t3.id
-        where (t1.USER_ID = #{newDriverInfoId} or t1.USER_ID = #{assistantDriverId}) and
-        t1.USE_TIME BETWEEN sysdate-interval '1' hour AND SYSDATE
-    </select>
-
-    <select id="getKeyCabinetInfo" resultType="com.zzj.dto.res.UserKeyStoreRecordResDTO">
-        SELECT  t2.ID AS KEY_ID,
-                t2.CABINET_ID AS BoxId,
-                t2.LATTICE_CODE,
-                t2.LATTICE_NAME,
-                t2.LATTICE_STATUS,
-                t1.KEY_CABINET_CODE,
-                t1.KEY_CABINET_NAME
-        FROM KEY_CABINET_LATTICE t2
-        LEFT JOIN KEY_CABINET_INFORMATION t1 ON t2.CABINET_ID  = t1.ID
-        WHERE t2.LATTICE_CODE  = #{boxNum} AND t1.KEY_CABINET_CODE = #{boxNum}
-    </select>
-
 
     <insert id="dutyOn" parameterType="com.zzj.dto.req.AttendQuitReqDTO">
-        <!--insert into CW_BACKGROUND_RECORD
-        (
-            ID,
-            USER_ID,
-            CRUSERDELID,
-            ATTENDANCETIME,
-            RECDATE,
-            ATTENTUSER,
-            ALCOHOLTEST,
-            BLOODPRESSURE
-        )
-        values
-        (sys_guid(),
-         #{userId},
-        #{cruserdelid},
-        to_date(#{attendTime},'yyyy-mm-dd hh24:mi:ss'),
-        to_date(#{recDate},'yyyy-mm-dd hh24:mi:ss'),
-        #{attentuser},
-        #{alcoholtest},
-        0)-->
         insert into NEW_DRIVER_ATTEND_QUIT
         (
         ID,
@@ -358,6 +273,9 @@
         NEW_SCHEDULING_ID,
         "alcohol_check_status",
         "alcohol_check_result",
+        <if test="keyCabinet!=null and keyCabinet!=''">
+            KEY_CABINET_NAME,
+        </if>
         CLOCK_IN_USER,
         DRIVER_ID,
         CREATE_BY
@@ -370,6 +288,9 @@
         #{newSchedulingId},
         #{alcoholTestStatus},
         #{alcoholResult},
+        <if test="keyCabinet!=null and keyCabinet!=''">
+            #{keyCabinet},
+        </if>
         #{userId},
         #{userId},
         #{userId}
@@ -383,6 +304,9 @@
         WORK_TYPE,
         ACTION_TIME,
         NEW_SCHEDULING_ID,
+        <if test="keyCabinet!=null and keyCabinet!=''">
+            KEY_CABINET_NAME,
+        </if>
         CLOCK_IN_USER,
         DRIVER_ID,
         CREATE_BY
@@ -393,6 +317,9 @@
         #{workType},
         to_date(#{actionTime},'yyyy-mm-dd hh24:mi:ss'),
         #{newSchedulingId},
+        <if test="keyCabinet!=null and keyCabinet!=''">
+            #{keyCabinet},
+        </if>
         #{userId},
         #{userId},
         #{userId}
@@ -406,12 +333,6 @@
     </insert>
 
     <insert id="addRecordDetail">
-        <!--insert ALL
-        <foreach collection="list" item="item" separator=" ">
-             into RECORDEXAMLIST (rel_exam_id,rel_answer,rel_correct,rel_re_id) values
-            ( #{item.relExamId}, #{item.relAnswer},#{item.relCorrect},#{reId})
-        </foreach>
-        SELECT * FROM dual-->
         insert into RECORDEXAMLIST (rel_id,rel_exam_id,rel_answer,rel_correct,rel_re_id, create_time)
         select ISEQ_RECORDEXAMLIST_ID.nextval, rel_exam_id,rel_answer,rel_correct,rel_re_id,create_time
         from (
@@ -425,7 +346,6 @@
             from dual
         </foreach>
         ) A
-
     </insert>
 
     <select id="getHadSaveOrder" resultType="java.lang.Integer">
@@ -543,27 +463,58 @@
             )
         </foreach>
         select * from dual
-
     </insert>
 
-    <insert id="insertKeyRecord">
-        insert into KEY_CABINET_LATTICE_RECORD
-        (ID,CABINET_ID,LATTICE_ID,USER_ID,SCHEDULING_ID, CROSSING_ID,USE_TIME,CREATE_TIME)
-        values
-        (
-        #{id},
-        #{cabinetId},
-        #{latticeId},
-        #{userId},
-        #{schedulingId},
-        #{crossingId},
-        sysdate,
-        sysdate)
-    </insert>
+    <update id="updateFace">
+        update IAM_USER set
+        FACE_FLAG = '1'
+        where USER_NUM = #{userNo}
+    </update>
 
-        <update id="updateFace">
-            update IAM_USER set
-            FACE_FLAG = '1'
-            where USER_NUM = #{userNo}
-        </update>
+    <select id="screen" resultType="com.zzj.dto.res.ScreenResDTO">
+        SELECT
+        t1.ID,
+        t1.NEW_DRIVER_INFO_ID,
+        u1.REALNAME AS DRIVER_NAME,
+        (CASE WHEN t1.NEW_DRIVER_INFO_ID IS NULL THEN NULL
+        WHEN q1.ACTION_TIME IS NULL THEN 0
+        WHEN TO_CHAR(q1.ACTION_TIME,'HH24MISS')>t2.ATTEND_TIME THEN 2 ELSE 1 end) DRIVER_FLAG,
+        t1.ASSISTANT_DRIVER_ID,
+        u2.REALNAME AS ASSISTANT_DRIVER_NAME,
+        (CASE WHEN t1.ASSISTANT_DRIVER_ID IS NULL THEN NULL
+        WHEN q2.ACTION_TIME IS NULL THEN 0
+        WHEN TO_CHAR(q2.ACTION_TIME,'HH24MISS')>t2.ATTEND_TIME THEN 2 ELSE 1 END) ASSISTANT_DRIVER_FLAG,
+        t1.STUDENT_DRIVER_ID,
+        u3.REALNAME AS STUDENT_DRIVER_NAME,
+        (CASE WHEN t1.STUDENT_DRIVER_ID IS NULL THEN NULL
+        WHEN q3.ACTION_TIME IS NULL THEN 0
+        WHEN TO_CHAR(q3.ACTION_TIME,'HH24MISS')>t2.ATTEND_TIME THEN 2 ELSE 1 END) STUDENT_DRIVER_FLAG,
+        t1.NEW_CROSSINGROAD_ID as crId,
+        t2.CROSSINGROAD_NAME as crName,
+        t2.ATTEND_TIME as attentime,
+        t2.QUIT_TIME as offtime,
+        t5.id AS line_id,
+        t5.linename AS line_name，
+        t7.STATION_NAME as attenplace,
+        tn.TRAIN_NAME,
+        tn.TRAIN_NUMBER_TYPE
+        FROM NEW_SCHEDULING t1
+        LEFT JOIN NEW_CROSSINGROAD t2 ON t1.NEW_CROSSINGROAD_ID = t2.ID
+        LEFT JOIN NEW_CLASS_TABLE t8 on t1.NEW_CLASS_TABLE_ID = t8.ID
+        LEFT JOIN NEW_CROSSINGROAD_TABLE t3 ON t2.NEW_CROSSINGROAD_TABLE_ID = t3.ID
+        LEFT JOIN NEW_TIME_TABLE t4 ON t4.ID = t3.NEW_TIME_TABLE_ID and t4.IS_DELETED=0
+        LEFT JOIN LINE t5 ON t5.ID  = t4.LINE_ID
+        LEFT JOIN STATIONS t7 on t7.ID = t2.ATTEND_LOCATION
+        LEFT JOIN CROSSINGROADTYPE t9 on t9.ID=t2.CROSSINGROADTYPE_ID and t9.IS_DELETED=0
+        LEFT JOIN NEW_DRIVER_ATTEND_QUIT q1 on t1.ID=q1.NEW_SCHEDULING_ID and q1.CLOCK_IN_USER=t1.NEW_DRIVER_INFO_ID and q1.WORK_TYPE=1 and ROWNUM=1
+        LEFT JOIN NEW_DRIVER_ATTEND_QUIT q2 on t1.ID=q2.NEW_SCHEDULING_ID and q2.CLOCK_IN_USER=t1.ASSISTANT_DRIVER_ID and q2.WORK_TYPE=1 and ROWNUM=1
+        LEFT JOIN NEW_DRIVER_ATTEND_QUIT q3 on t1.ID=q3.NEW_SCHEDULING_ID and q3.CLOCK_IN_USER=t1.STUDENT_DRIVER_ID and q3.WORK_TYPE=1 and ROWNUM=1
+        LEFT JOIN NEW_TRAIN_NUMBER tn on tn.ID=t2.ATTEND_TRAIN_NUMBER
+        LEFT JOIN IAM_USER u1 ON u1.ID=t1.NEW_DRIVER_INFO_ID
+        LEFT JOIN IAM_USER u2 ON u2.ID=t1.ASSISTANT_DRIVER_ID
+        LEFT JOIN IAM_USER u3 ON u3.ID=t1.STUDENT_DRIVER_ID
+        WHERE trunc(t1.ARRANGE_DATE)=trunc(sysdate) AND t1.is_deleted=0 and t8.AUDIT_STATUS=2
+        and t2.CLASS_TYPE=#{classType} AND t4.LINE_ID is not null
+        ORDER BY t2.ORDER_NO ASC
+    </select>
 </mapper>

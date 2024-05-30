@@ -1,10 +1,8 @@
 package com.zzj.mapperDM;
 
-import com.baomidou.mybatisplus.annotation.SqlParser;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zzj.dto.req.*;
 import com.zzj.dto.res.*;
-import io.swagger.models.auth.In;
-import jdk.nashorn.internal.parser.Token;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
 
@@ -14,14 +12,9 @@ import java.util.List;
 @Repository
 public interface DmUserAccountMapper {
 
-
     IamUserResDTO getUserByName(String userName);
 
     SysUserCardResDTO getUserByCard(String uuid);
-
-    String getUserByFace(String face);
-
-    SystemUserResDTO getUserByFinger(String userName);
 
     UserAccountDetailResDTO getUserDetail(String userNo);
 
@@ -56,6 +49,13 @@ public interface DmUserAccountMapper {
      * @return 出退勤记录
      */
     List<DmAttendQuitResDTO> getAttendQuit(Long crId, Long userId, Integer type);
+
+    /**
+     * 获取用户最新退勤信息
+     * @param userId 用户id
+     * @return 最新退勤信息
+     */
+    DmAttendQuitResDTO getQuit(Long userId);
 
     Integer dutyOn(AttendQuitReqDTO attendQuitReqDTO);
 
@@ -113,13 +113,11 @@ public interface DmUserAccountMapper {
 
     Integer updateFace(String userNo);
 
-    Integer cleanUserCardTable();
-
-    CheckDutyResDTO checkDutyInfo(Long userId,Long id);
-
-    List<UserKeyStoreRecordResDTO> getKeyRecord(CheckDutyResDTO duty);
-
-    KeyCabinetResDTO getKeyCabinetInfo(String boxNum,String keyNum);
-
-    Integer insertKeyRecord(UserKeyStoreRecordResDTO userKeyStoreRecord);
+    /**
+     * 大屏接口
+     * @param page 分页参数
+     * @param classType 类型
+     * @return 大屏信息
+     */
+    Page<ScreenResDTO> screen(Page<ScreenResDTO> page, int classType);
 }

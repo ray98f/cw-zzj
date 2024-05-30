@@ -12,16 +12,11 @@ import java.util.List;
 @Repository
 public interface UserAccountMapper {
 
-
     SystemUserResDTO getUserByName(String userName);
 
     SystemUserResDTO getUserByCard(String cardUid);
 
-    SystemUserResDTO getUserByFinger(String userName);
-
     UserAccountDetailResDTO getUserDetail(Integer userId);
-
-    Integer getPassRecordCount(Integer userId);
 
     @SqlParser(filter = true)
     List<ExamResDTO> getExamList();

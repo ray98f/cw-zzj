@@ -1,5 +1,7 @@
 package com.zzj.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.zzj.dto.PageReqDTO;
 import com.zzj.dto.req.AttendQuitReqDTO;
 import com.zzj.dto.req.ExamRecordReqDTO;
 import com.zzj.dto.req.OrderReqDTO;
@@ -66,8 +68,13 @@ public interface UserAccountService {
 
     Integer faceRegister(CurrentLoginUser currentLoginUser,List<HashMap<String,Object>> list);
 
-    CheckKeyStoreResDTO checkKeyStore(CurrentLoginUser currentLoginUser,HashMap<String,Object> map);
+    String keyCabinetTest(CurrentLoginUser currentLoginUser, String offTime, Integer type, String day);
 
-    // void getKeyRecord();
+    /**
+     * 大屏接口
+     * @param pageReqDTO 分页参数
+     * @return 大屏信息
+     */
+    Page<ScreenResDTO> screen(PageReqDTO pageReqDTO);
 
 }

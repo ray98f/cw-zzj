@@ -132,5 +132,10 @@ public class DutyDetailResDTO {
      */
     private String firstTrain;
 
+    /**
+     * 钥匙柜信息
+     */
+    private String keyCabinet;
+
 
 }

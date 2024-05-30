@@ -9,6 +9,10 @@ package com.zzj.constant;
  */
 public interface CommonConstants {
 
+     String COMMA = ",";
+
+     String UNKNOWN = "unknown";
+
     /**
      * 删除
      */
@@ -89,6 +93,7 @@ public interface CommonConstants {
     String LOGIN_TYPE_FACE = "3";
     String OFF_CR_NAME = "休";
     Integer DEFAULT_EXAM_COUNT = 3;
+    Integer SIX = 6;
 
     String DEF_TENANT_ID = "RXTX";
     String DUTY_OFF_CR_NAME_CHECK = "晚";

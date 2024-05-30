@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zzj.annotation.CurrUser;
 import com.zzj.constant.CommonConstants;
 import com.zzj.dto.DataResponse;
+import com.zzj.dto.PageReqDTO;
+import com.zzj.dto.PageResponse;
 import com.zzj.dto.req.AttendQuitReqDTO;
 import com.zzj.dto.req.ExamRecordReqDTO;
 import com.zzj.dto.req.OrderReqDTO;
@@ -21,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -76,15 +79,6 @@ public class UserAccountController {
     @ApiOperation(value = "出勤")
     public DataResponse<String> attendSave(@CurrUser CurrentLoginUser currentLoginUser,@RequestBody AttendQuitReqDTO attendQuitReqDTO){
         return DataResponse.of(userAccountService.dutyOn(currentLoginUser,attendQuitReqDTO));
-    }
-
-    @PostMapping ("/checkKeyStore")
-    @ApiOperation(value = "校验钥匙归还")
-    @SneakyThrows
-    public DataResponse<CheckKeyStoreResDTO> checkKeyStore(@CurrUser CurrentLoginUser currentLoginUser,
-                                              @RequestBody HashMap<String,Object> map) {
-
-        return DataResponse.of(userAccountService.checkKeyStore(currentLoginUser,map));
     }
 
     @PostMapping("/dutyOff")
@@ -147,13 +141,6 @@ public class UserAccountController {
         return DataResponse.of(userAccountService.getStationList(trainNum));
     }
 
-    @GetMapping("/boxList")
-    @ApiOperation(value = "获取钥匙柜列表")
-    public DataResponse<List<T>> boxList(@RequestParam String trainNum) {
-        // TODO 钥匙柜接口：终端信息查询接口（Terminal_Query）
-        return null;
-    }
-
     @GetMapping("/featureList")
     @ApiOperation(value = "获取特征列表")
     public DataResponse<List<UserFaceFeatureResDTO>> featureList(@RequestParam String tenantId) {
@@ -171,5 +158,23 @@ public class UserAccountController {
         return DataResponse.of(userAccountService.faceRegister(currentLoginUser,list));
     }
 
+    @GetMapping("/keyCabinetTest")
+    public DataResponse<String> keyCabinetTest(@RequestParam String offTime,
+                                               @RequestParam Integer type,
+                                               @RequestParam String day,
+                                               @CurrUser CurrentLoginUser currentLoginUser) {
+        return DataResponse.of(userAccountService.keyCabinetTest(currentLoginUser, offTime, type, day));
+    }
+
+    /**
+     * 大屏接口
+     * @param pageReqDTO 分页参数
+     * @return 大屏信息
+     */
+    @GetMapping("/screen/list")
+    @ApiOperation(value = "大屏接口")
+    public PageResponse<ScreenResDTO> screen(@Valid PageReqDTO pageReqDTO) {
+        return PageResponse.of(userAccountService.screen(pageReqDTO));
+    }
 
 }

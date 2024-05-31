@@ -248,8 +248,6 @@ public class UserAccountServiceImpl implements UserAccountService {
                 if (com.zzj.utils.StringUtils.isNotEmpty(trains)) {
                     dutyInfo.setFirstTrain(trains.get(0).getTrainName());
                 }
-            } else {
-                throw new CommonException(ErrorCode.NEXT_DUTY_INFO_NOT_EXIST);
             }
             return dutyInfo;
         } catch (Exception e) {

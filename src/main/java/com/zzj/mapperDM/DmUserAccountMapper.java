@@ -40,7 +40,7 @@ public interface DmUserAccountMapper {
      * @param rests 休息关键字
      * @return 下一个排班
      */
-    DutyDetailResDTO getNextWorkDutyInfo(Long userId, String[] rests);
+    DutyDetailResDTO getNextWorkDutyInfo(Long userId, List<String> rests);
 
     /**
      * 获取派班人员

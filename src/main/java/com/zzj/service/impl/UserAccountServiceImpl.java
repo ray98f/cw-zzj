@@ -241,7 +241,7 @@ public class UserAccountServiceImpl implements UserAccountService {
     @Override
     public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser) {
         try {
-            DutyDetailResDTO dutyInfo = dmUserAccountMapper.getNextWorkDutyInfo(currentLoginUser.getUserId(), DUTY_REST);
+            DutyDetailResDTO dutyInfo = dmUserAccountMapper.getNextWorkDutyInfo(currentLoginUser.getUserId(), Arrays.asList(DUTY_REST));
             if (com.zzj.utils.StringUtils.isNotNull(dutyInfo)) {
                 setDutyTime(dutyInfo);
                 List<UserDutyReqDTO> trains = JSONArray.parseArray(dutyInfo.getStartRunCrossingroad(), UserDutyReqDTO.class);

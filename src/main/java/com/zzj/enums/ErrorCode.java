@@ -182,14 +182,19 @@ public enum ErrorCode {
     NEXT_DUTY_INFO_ERROR(3200109, "next.duty.info.error"),
 
     /**
+     * 下个排班不存在
+     */
+    NEXT_DUTY_INFO_NOT_EXIST(3200110, "next.duty.info.not.exist"),
+
+    /**
      * 钥匙柜外部接口错误
      */
-    KEY_CABINET_OPENAPI_ERROR(3200110, "key.cabinet.openapi.error"),
+    KEY_CABINET_OPENAPI_ERROR(3200111, "key.cabinet.openapi.error"),
 
     /**
      * 乘务系统外部接口错误
      */
-    OCM_OPENAPI_ERROR(3200111, "ocm.openapi.error");
+    OCM_OPENAPI_ERROR(3200112, "ocm.openapi.error");
 
 
 

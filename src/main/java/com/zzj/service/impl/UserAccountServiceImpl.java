@@ -211,7 +211,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         List<DutyDetailResDTO> nowDutyInfosList = dmUserAccountMapper.getDutyInfo(currentLoginUser.getUserId());
         DutyDetailResDTO lastDutyInfo = getNearlyDutyInfo(lastDutyInfoList);
         DutyDetailResDTO nowDutyInfo = getNearlyDutyInfo(nowDutyInfosList);
-        // 根据当前时间是否已过1点判断
+        // 根据当前时间是否已过2点判断
         DutyDetailResDTO dutyInfo = (DateUtils.dutyTimeDetermine() ? lastDutyInfo : nowDutyInfo);
         if (dutyInfo == null) {
             throw new CommonException(ErrorCode.DUTY_INFO_NOT_EXIST);
@@ -241,22 +241,15 @@ public class UserAccountServiceImpl implements UserAccountService {
     @Override
     public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser) {
         try {
-            int i = 1;
-            List<DutyDetailResDTO> dutyInfoList = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
-            DutyDetailResDTO dutyInfo = getNearlyDutyInfo(dutyInfoList);
-            while (Objects.isNull(dutyInfo) || !Objects.isNull(Objects.requireNonNull(dutyInfo).getCrName())) {
-                DutyDetailResDTO finalDutyInfo = dutyInfo;
-                if (com.zzj.utils.StringUtils.isNotNull(finalDutyInfo) && Arrays.stream(DUTY_REST).noneMatch(rest -> finalDutyInfo.getCrName().equals(rest))) {
-                    break;
+            DutyDetailResDTO dutyInfo = dmUserAccountMapper.getNextWorkDutyInfo(currentLoginUser.getUserId(), DUTY_REST);
+            if (com.zzj.utils.StringUtils.isNotNull(dutyInfo)) {
+                setDutyTime(dutyInfo);
+                List<UserDutyReqDTO> trains = JSONArray.parseArray(dutyInfo.getStartRunCrossingroad(), UserDutyReqDTO.class);
+                if (com.zzj.utils.StringUtils.isNotEmpty(trains)) {
+                    dutyInfo.setFirstTrain(trains.get(0).getTrainName());
                 }
-                i++;
-                dutyInfoList = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), i);
-                dutyInfo = getNearlyDutyInfo(dutyInfoList);
-            }
-            setDutyTime(dutyInfo);
-            List<UserDutyReqDTO> trains = JSONArray.parseArray(dutyInfo.getStartRunCrossingroad(), UserDutyReqDTO.class);
-            if (!Objects.isNull(trains) && !trains.isEmpty()) {
-                dutyInfo.setFirstTrain(trains.get(0).getTrainName());
+            } else {
+                throw new CommonException(ErrorCode.NEXT_DUTY_INFO_NOT_EXIST);
             }
             return dutyInfo;
         } catch (Exception e) {

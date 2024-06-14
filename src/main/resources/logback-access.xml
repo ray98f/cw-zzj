@@ -1,0 +1,25 @@
+<configuration>
+    <!-- always a good activate OnConsoleStatusListener -->
+    <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+
+            <pattern>%date{yyyy-MM-dd HH:mm:ss.SSS} access-log [%I] "%r" %s %elapsedTime | request-log: %requestContent | response-log: %responseContent | Authorization: %header{Authorization}</pattern>
+        </encoder>
+    </appender>
+
+    <appender-ref ref="STDOUT"/>
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>log/access.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>access.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%date{yyyy-MM-dd HH:mm:ss.SSS} access-log [%I] "%r" %s %elapsedTime | request-log: %requestContent | response-log: %responseContent | Authorization: %header{Authorization}</pattern>
+        </encoder>
+    </appender>
+    <appender-ref ref="FILE"/>
+
+</configuration>

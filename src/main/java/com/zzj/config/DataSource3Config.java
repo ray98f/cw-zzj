@@ -37,8 +37,7 @@ public class DataSource3Config {
         MybatisConfiguration configuration = new MybatisConfiguration();
         configuration.setMapUnderscoreToCamelCase(true);
         configuration.setMultipleResultSetsEnabled(true);
-//        configuration.setLogImpl(org.apache.ibatis.logging.stdout.StdOutImpl.class);
-        configuration.setLogImpl(org.apache.ibatis.logging.nologging.NoLoggingImpl.class);
+        configuration.setLogImpl(org.apache.ibatis.logging.slf4j.Slf4jImpl.class);
         bean.setConfiguration(configuration);
         bean.setPlugins(new PaginationInterceptor[]{mybatisPlusConfig.paginationInterceptor()});
         bean.setMapperLocations(new PathMatchingResourcePatternResolver().getResources("classpath:mapperEip/*.xml"));

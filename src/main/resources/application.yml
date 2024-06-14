@@ -37,4 +37,13 @@ jetcache:
 #  jackson:
 #    time-zone: GMT+8
 #    date-format: yyyy-MM-dd HH:mm:ss
+logging:
+  level:
+    com.zzj.mapper: trace
+    com.zzj.mapperDM: trace
+    com.zzj.mapperEip: trace
+    com.zzj.controller: trace
+logback:
+  access:
+    enabled: true
 

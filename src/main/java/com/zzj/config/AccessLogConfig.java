@@ -1,0 +1,18 @@
+package com.zzj.config;
+
+import ch.qos.logback.access.servlet.TeeFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * @author loger
+ */
+@Configuration
+public class AccessLogConfig {
+    @Bean
+    public FilterRegistrationBean requestLoggingFilter() {
+        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(new TeeFilter());
+        return filterRegistrationBean;
+    }
+}

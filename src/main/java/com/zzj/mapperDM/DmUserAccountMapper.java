@@ -32,14 +32,15 @@ public interface DmUserAccountMapper {
 
     List<DutyDetailResDTO> getDutyInfo(Long userId);
 
+    List<DutyDetailResDTO> getNextDutyInfo(Long userId, int i);
+
     /**
      * 获取下一个不休息的排班
      * @param userId 用户id
-     * @param i 前i天
      * @param rests 休息关键字
      * @return 下一个排班
      */
-    List<DutyDetailResDTO> getNextDutyInfo(Long userId, Integer i, List<String> rests);
+    DutyDetailResDTO getNextWorkDutyInfo(Long userId, List<String> rests);
 
     /**
      * 获取派班人员

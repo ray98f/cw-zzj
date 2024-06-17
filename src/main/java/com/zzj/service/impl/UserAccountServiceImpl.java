@@ -207,7 +207,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     public DutyDetailResDTO getDutyInfo(CurrentLoginUser currentLoginUser) {
-        List<DutyDetailResDTO> lastDutyInfoList = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), -1, null);
+        List<DutyDetailResDTO> lastDutyInfoList = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), -1);
         List<DutyDetailResDTO> nowDutyInfosList = dmUserAccountMapper.getDutyInfo(currentLoginUser.getUserId());
         DutyDetailResDTO lastDutyInfo = getNearlyDutyInfo(lastDutyInfoList);
         DutyDetailResDTO nowDutyInfo = getNearlyDutyInfo(nowDutyInfosList);
@@ -241,10 +241,8 @@ public class UserAccountServiceImpl implements UserAccountService {
     @Override
     public DutyDetailResDTO getNextDutyInfo(CurrentLoginUser currentLoginUser) {
         try {
-            List<DutyDetailResDTO> dutyInfoList = dmUserAccountMapper.getNextDutyInfo(currentLoginUser.getUserId(), null, Arrays.asList(DUTY_REST));
-            DutyDetailResDTO dutyInfo = new DutyDetailResDTO();
-            if (com.zzj.utils.StringUtils.isNotEmpty(dutyInfoList)) {
-                dutyInfo = dutyInfoList.get(0);
+            DutyDetailResDTO dutyInfo = dmUserAccountMapper.getNextWorkDutyInfo(currentLoginUser.getUserId(), Arrays.asList(DUTY_REST));
+            if (com.zzj.utils.StringUtils.isNotNull(dutyInfo)) {
                 setDutyTime(dutyInfo);
                 List<UserDutyReqDTO> trains = JSONArray.parseArray(dutyInfo.getStartRunCrossingroad(), UserDutyReqDTO.class);
                 if (com.zzj.utils.StringUtils.isNotEmpty(trains)) {

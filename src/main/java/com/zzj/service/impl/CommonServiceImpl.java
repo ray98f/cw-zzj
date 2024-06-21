@@ -78,11 +78,12 @@ public class CommonServiceImpl implements CommonService {
     public JXResDTO queryJx() {
         JXResDTO jxRes = new JXResDTO();
 
-        CompletableFuture<JXResDTO> task1 = CompletableFuture.supplyAsync(() -> callJx(jxNocm),
+        //#乘务nocm、行车nodm、站务nosm、票务notm
+        CompletableFuture<JXResDTO> task1 = CompletableFuture.supplyAsync(() -> callJx(jxNocm,"NOCM","乘务管理系统"),
                 apiExecutor);
-        CompletableFuture<JXResDTO> task2 = CompletableFuture.supplyAsync(() -> callJx(jxNodm),
+        CompletableFuture<JXResDTO> task2 = CompletableFuture.supplyAsync(() -> callJx(jxNodm,"NODM","行车调度系统"),
                 apiExecutor);
-        CompletableFuture<JXResDTO> task3 = CompletableFuture.supplyAsync(() -> callJx(jxNosm),
+        CompletableFuture<JXResDTO> task3 = CompletableFuture.supplyAsync(() -> callJx(jxNosm,"NOSM","站务管理系统"),
                 apiExecutor);
         CompletableFuture<Void> allOf = CompletableFuture.allOf(task1, task2);
         allOf.get();
@@ -126,7 +127,7 @@ public class CommonServiceImpl implements CommonService {
         return null;
     }
 
-    private JXResDTO callJx(String url){
+    private JXResDTO callJx(String url,String sysCode,String sysName){
         JSONObject res = JSONObject.parseObject(HttpUtils.doGet(url, null), JSONObject.class);
         if(StringUtils.isNotEmpty(res.getString("data")) && StringUtils.isNotEmpty(res.getString("data").replace("[","").replace("]",""))){
             JSONObject data = JSONObject.parseObject(res.getString("data").toString(), JSONObject.class);
@@ -145,6 +146,8 @@ public class CommonServiceImpl implements CommonService {
                 JXResDTO jxRes = new JXResDTO();
                 jxRes.setMonthVoList(monthList);
                 jxRes.setYearVoList(yearList);
+                jxRes.setSysCode(sysCode);
+                jxRes.setSysName(sysName);
                 return jxRes;
             }
             return null;

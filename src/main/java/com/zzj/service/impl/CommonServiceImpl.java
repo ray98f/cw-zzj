@@ -78,22 +78,26 @@ public class CommonServiceImpl implements CommonService {
     public JXResDTO queryJx() {
         JXResDTO jxRes = new JXResDTO();
 
-        CompletableFuture<JXResDTO> task1 = CompletableFuture.supplyAsync(() -> callJx(jxNocm),
+        //#乘务nocm、行车nodm、站务nosm、票务notm
+        CompletableFuture<JXResDTO> task1 = CompletableFuture.supplyAsync(() -> callJx(jxNocm,"NOCM","乘务管理系统"),
                 apiExecutor);
-        CompletableFuture<JXResDTO> task2 = CompletableFuture.supplyAsync(() -> callJx(jxNodm),
+        CompletableFuture<JXResDTO> task2 = CompletableFuture.supplyAsync(() -> callJx(jxNodm,"NODM","行车调度系统"),
                 apiExecutor);
-        CompletableFuture<JXResDTO> task3 = CompletableFuture.supplyAsync(() -> callJx(jxNosm),
+        CompletableFuture<JXResDTO> task3 = CompletableFuture.supplyAsync(() -> callJx(jxNosm,"NOSM","站务管理系统"),
                 apiExecutor);
-        CompletableFuture<Void> allOf = CompletableFuture.allOf(task1, task2);
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(task1, task2,task3);
         allOf.get();
 
         List<JXMonthResDTO> jxMonth =new ArrayList<>();
         List<JXYearResDTO> jxYear =new ArrayList<>();
+
+
         if(task1.get() != null && task1.get().getMonthVoList() != null){
             jxMonth.addAll(task1.get().getMonthVoList());
         }
         if(task2.get() != null && task2.get().getMonthVoList() != null){
             jxMonth.addAll(task2.get().getMonthVoList());
+
         }
         if(task3.get() != null && task3.get().getMonthVoList() != null){
             jxMonth.addAll(task3.get().getMonthVoList());
@@ -126,7 +130,7 @@ public class CommonServiceImpl implements CommonService {
         return null;
     }
 
-    private JXResDTO callJx(String url){
+    private JXResDTO callJx(String url,String sysCode,String sysName){
         JSONObject res = JSONObject.parseObject(HttpUtils.doGet(url, null), JSONObject.class);
         if(StringUtils.isNotEmpty(res.getString("data")) && StringUtils.isNotEmpty(res.getString("data").replace("[","").replace("]",""))){
             JSONObject data = JSONObject.parseObject(res.getString("data").toString(), JSONObject.class);
@@ -137,9 +141,17 @@ public class CommonServiceImpl implements CommonService {
                 List<JXYearResDTO> yearList = new ArrayList<>();
                 if(StringUtils.isNotEmpty(monthVoList)){
                     monthList = JSONArray.parseArray(monthVoList, JXMonthResDTO.class);
+                    for(JXMonthResDTO jxMonthResDTO:monthList){
+                        jxMonthResDTO.setSysCode(sysCode);
+                        jxMonthResDTO.setSystemName(sysName);
+                    }
                 }
                 if(StringUtils.isNotEmpty(yearVoList)){
                     yearList = JSONArray.parseArray(yearVoList, JXYearResDTO.class);
+                    for(JXYearResDTO jxMonthResDTO:yearList){
+                        jxMonthResDTO.setSysCode(sysCode);
+                        jxMonthResDTO.setSystemName(sysName);
+                    }
                 }
 
                 JXResDTO jxRes = new JXResDTO();

@@ -20,6 +20,8 @@ public class JXYearResDTO {
     private String totalScore;
     private String typeName;
     private String result;
+    private String sysCode;
+    private String systemName;
     private HashMap<String,Object> valueMap;
 
 }

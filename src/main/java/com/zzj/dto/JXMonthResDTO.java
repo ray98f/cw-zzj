@@ -17,5 +17,7 @@ public class JXMonthResDTO {
     private String totalScore;
     private String monthStarStatus;
     private String typeName;
+    private String sysCode;
+    private String systemName;
 
 }

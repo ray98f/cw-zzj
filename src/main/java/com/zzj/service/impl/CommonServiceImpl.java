@@ -85,16 +85,19 @@ public class CommonServiceImpl implements CommonService {
                 apiExecutor);
         CompletableFuture<JXResDTO> task3 = CompletableFuture.supplyAsync(() -> callJx(jxNosm,"NOSM","站务管理系统"),
                 apiExecutor);
-        CompletableFuture<Void> allOf = CompletableFuture.allOf(task1, task2);
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(task1, task2,task3);
         allOf.get();
 
         List<JXMonthResDTO> jxMonth =new ArrayList<>();
         List<JXYearResDTO> jxYear =new ArrayList<>();
+
+
         if(task1.get() != null && task1.get().getMonthVoList() != null){
             jxMonth.addAll(task1.get().getMonthVoList());
         }
         if(task2.get() != null && task2.get().getMonthVoList() != null){
             jxMonth.addAll(task2.get().getMonthVoList());
+
         }
         if(task3.get() != null && task3.get().getMonthVoList() != null){
             jxMonth.addAll(task3.get().getMonthVoList());
@@ -138,16 +141,22 @@ public class CommonServiceImpl implements CommonService {
                 List<JXYearResDTO> yearList = new ArrayList<>();
                 if(StringUtils.isNotEmpty(monthVoList)){
                     monthList = JSONArray.parseArray(monthVoList, JXMonthResDTO.class);
+                    for(JXMonthResDTO jxMonthResDTO:monthList){
+                        jxMonthResDTO.setSysCode(sysCode);
+                        jxMonthResDTO.setSystemName(sysName);
+                    }
                 }
                 if(StringUtils.isNotEmpty(yearVoList)){
                     yearList = JSONArray.parseArray(yearVoList, JXYearResDTO.class);
+                    for(JXYearResDTO jxMonthResDTO:yearList){
+                        jxMonthResDTO.setSysCode(sysCode);
+                        jxMonthResDTO.setSystemName(sysName);
+                    }
                 }
 
                 JXResDTO jxRes = new JXResDTO();
                 jxRes.setMonthVoList(monthList);
                 jxRes.setYearVoList(yearList);
-                jxRes.setSysCode(sysCode);
-                jxRes.setSysName(sysName);
                 return jxRes;
             }
             return null;

@@ -12,8 +12,6 @@ import java.util.List;
 @ApiModel
 public class JXResDTO {
 
-    private String sysCode;
-    private String sysName;
     private List<JXMonthResDTO> monthVoList;
     private List<JXYearResDTO> yearVoList;
 
